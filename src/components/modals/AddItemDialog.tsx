@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog } from './Dialog';
 
 interface AddItemDialogProps {
@@ -6,11 +6,23 @@ interface AddItemDialogProps {
   onClose: () => void;
   onAdd: (name: string, price: number) => void;
   currency: string;
+  editItem?: { index: number; item: { name: string; price: number } } | null;
 }
 
-export const AddItemDialog = ({ isOpen, onClose, onAdd, currency }: AddItemDialogProps) => {
+export const AddItemDialog = ({ isOpen, onClose, onAdd, currency, editItem }: AddItemDialogProps) => {
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
+
+  // Initialize form when editing an item
+  useEffect(() => {
+    if (editItem) {
+      setName(editItem.item.name);
+      setPrice(editItem.item.price.toString());
+    } else {
+      setName('');
+      setPrice('');
+    }
+  }, [editItem]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,7 +37,7 @@ export const AddItemDialog = ({ isOpen, onClose, onAdd, currency }: AddItemDialo
   };
 
   return (
-    <Dialog isOpen={isOpen} onClose={onClose} title="Add Item">
+    <Dialog isOpen={isOpen} onClose={onClose} title={editItem ? 'Edit Item' : 'Add Item'}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="itemName" className="block text-sm font-medium text-gray-700">
@@ -69,7 +81,7 @@ export const AddItemDialog = ({ isOpen, onClose, onAdd, currency }: AddItemDialo
             disabled={!name.trim() || !price || isNaN(parseFloat(price)) || parseFloat(price) <= 0}
             className="btn-primary"
           >
-            Add Item
+            {editItem ? 'Save Changes' : 'Add Item'}
           </button>
         </div>
       </form>
