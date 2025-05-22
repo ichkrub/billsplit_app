@@ -4,6 +4,29 @@ import type { Person, Item, SplitInput, SplitSummary } from '../../utils/splitLo
 import { calculateSplit } from '../../utils/splitLogic'
 import { saveAnonymousSplit } from '../../utils/supabaseClient'
 
+// Helper functions for calculations
+const calculateDiscount = (subtotal: number, discount: number, discountType: 'percent' | 'amount'): number => {
+  if (discountType === 'percent') {
+    return (subtotal * discount) / 100;
+  }
+  return discount;
+}
+
+const calculateTotal = (items: Item[], taxAmount: number, serviceAmount: number, otherCharges: number, discount: number, discountType: 'percent' | 'amount'): number => {
+  const subtotal = items.reduce((sum, item) => sum + (isNaN(item.price) ? 0 : item.price), 0);
+  const discountAmount = calculateDiscount(subtotal, discount, discountType);
+  return subtotal + taxAmount + serviceAmount + otherCharges - discountAmount;
+}
+
+const calculatePersonTotal = (itemTotal: number, items: Item[], taxAmount: number, serviceAmount: number, otherCharges: number, discount: number, discountType: 'percent' | 'amount'): number => {
+  const billTotal = calculateTotal(items, taxAmount, serviceAmount, otherCharges, discount, discountType);
+  const subtotal = items.reduce((sum, item) => sum + (isNaN(item.price) ? 0 : item.price), 0);
+  if (subtotal === 0) return 0;
+  // Calculate person's share of additional charges proportionally
+  const additionalChargesShare = (itemTotal / subtotal) * (billTotal - subtotal);
+  return itemTotal + additionalChargesShare;
+}
+
 const QuickSplitPage = () => {
   const [people, setPeople] = useState<Person[]>([])
   const [items, setItems] = useState<Item[]>([])
@@ -11,7 +34,7 @@ const QuickSplitPage = () => {
   const [serviceAmount, setServiceAmount] = useState(0)
   const [otherCharges, setOtherCharges] = useState(0)
   const [discount, setDiscount] = useState(0)
-  const [discountType, setDiscountType] = useState<'percent' | 'amount'>('percent')
+  const [discountType, setDiscountType] = useState<'percent' | 'amount'>('amount')
   const [currency, setCurrency] = useState('USD')
   const [vendorName, setVendorName] = useState('')
   const [summary, setSummary] = useState<SplitSummary | null>(null)
@@ -85,6 +108,7 @@ const QuickSplitPage = () => {
       const id = await saveAnonymousSplit(input)
       setShareLink(`${window.location.origin}/split/${id}`)
       setShowSaveDialog(false)
+      setPassword('') // Reset password after successful save
     } catch (error) {
       console.error('Failed to save split:', error)
       alert('Failed to save split. Please try again.')
@@ -219,7 +243,7 @@ const QuickSplitPage = () => {
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                          </svg>
+                        </svg>
                         </button>
                       </div>
                       <div className="px-3 py-2 border-t border-gray-100">
@@ -375,115 +399,286 @@ const QuickSplitPage = () => {
             </div>
 
             {/* Summary Section */}
-            {summary && (
-              <div className="bg-white rounded-xl shadow-sm p-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Summary</h2>
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-medium mb-2">Per Person:</h3>
-                    <div className="space-y-2">
-                      {Object.entries(summary.perPerson).map(([name, amount]) => (
-                        <div key={name} className="flex justify-between py-1 border-b border-gray-100">
-                          <span>{name}</span>
-                          <span className="font-medium">{currency} {(amount as number).toFixed(2)}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="pt-4 border-t border-gray-200">
-                    <div className="flex justify-between items-center">
-                      <span className="font-bold">Total</span>
-                      <span className="font-bold text-lg">{currency} {summary.total.toFixed(2)}</span>
-                    </div>
-                  </div>
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Summary</h2>
+              
+              {items.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-500 mb-2">No items added yet</p>
                   <button
-                    onClick={saveAndShare}
-                    className="w-full btn-primary text-center py-3 mt-4"
+                    onClick={addItem}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors duration-200 text-sm font-medium"
                   >
-                    Save & Share Split
+                    Add your first item
                   </button>
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="space-y-6">
+                  {/* Bill Header */}
+                  {vendorName && (
+                    <div className="text-gray-600 border-b pb-3">
+                      <h3 className="font-medium text-lg">{vendorName}</h3>
+                      <p className="text-sm">{items.length} item{items.length !== 1 ? 's' : ''}</p>
+                    </div>
+                  )}
+
+                  {/* Bill Breakdown */}
+                  <div>
+                    <h3 className="font-medium text-gray-900 mb-3">Bill Details</h3>
+                    <div className="space-y-2 text-sm bg-gray-50 rounded-lg p-4">
+                      <div className="flex justify-between py-1">
+                        <span className="text-gray-600">Subtotal</span>
+                        <span className="font-medium">{currency} {items.reduce((sum, item) => sum + (isNaN(item.price) ? 0 : item.price), 0).toFixed(2)}</span>
+                      </div>
+                      {taxAmount > 0 && (
+                        <div className="flex justify-between py-1">
+                          <span className="text-gray-600">Tax</span>
+                          <span>{currency} {taxAmount.toFixed(2)}</span>
+                        </div>
+                      )}
+                      {serviceAmount > 0 && (
+                        <div className="flex justify-between py-1">
+                          <span className="text-gray-600">Service Charge</span>
+                          <span>{currency} {serviceAmount.toFixed(2)}</span>
+                        </div>
+                      )}
+                      {otherCharges > 0 && (
+                        <div className="flex justify-between py-1">
+                          <span className="text-gray-600">Other Charges</span>
+                          <span>{currency} {otherCharges.toFixed(2)}</span>
+                        </div>
+                      )}
+                      {discount > 0 && (
+                        <div className="flex justify-between py-1 text-green-600">
+                          <span>Discount {discountType === 'percent' ? `(${discount}%)` : ''}</span>
+                          <span>- {currency} {calculateDiscount(
+                            items.reduce((sum, item) => sum + (isNaN(item.price) ? 0 : item.price), 0),
+                            discount,
+                            discountType
+                          ).toFixed(2)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between pt-2 border-t font-medium text-base">
+                        <span>Total</span>
+                        <span>{currency} {calculateTotal(items, taxAmount, serviceAmount, otherCharges, discount, discountType).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Per Person Breakdown */}
+                  <div className="pt-4">
+                    <h3 className="font-medium text-gray-900 mb-3">Per Person Breakdown</h3>
+                    {people.length === 0 ? (
+                      <div className="text-center py-4 bg-gray-50 rounded-lg">
+                        <p className="text-gray-500 text-sm mb-2">Add people to see individual breakdowns</p>
+                        <button
+                          onClick={addPerson}
+                          className="text-primary-600 hover:text-primary-700 text-sm font-medium"
+                        >
+                          Add Person
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {people.map((person) => {
+                          const personItems = items.filter(item => item.assigned.includes(person.name));
+                          const itemTotal = personItems.reduce((sum, item) => {
+                            const splitAmount = item.price / item.assigned.length;
+                            return sum + (isNaN(splitAmount) ? 0 : splitAmount);
+                          }, 0);
+                          
+                          // Calculate proportional shares
+                          const subtotal = items.reduce((sum, item) => sum + (isNaN(item.price) ? 0 : item.price), 0);
+                          const proportion = subtotal === 0 ? 0 : itemTotal / subtotal;
+                          const taxShare = taxAmount * proportion;
+                          const serviceShare = serviceAmount * proportion;
+                          const otherShare = otherCharges * proportion;
+                          const discountShare = calculateDiscount(subtotal, discount, discountType) * proportion;
+                          const personTotal = itemTotal + taxShare + serviceShare + otherShare - discountShare;
+
+                          return (
+                            <div key={person.name} className="bg-gray-50 rounded-lg overflow-hidden">
+                              <div 
+                                className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-100 transition-colors"
+                                onClick={(e) => {
+                                  const details = e.currentTarget.nextElementSibling;
+                                  if (details) {
+                                    details.classList.toggle('hidden');
+                                  }
+                                  const icon = e.currentTarget.querySelector('.rotate-icon');
+                                  if (icon) {
+                                    icon.classList.toggle('rotate-180');
+                                  }
+                                }}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium text-gray-900">{person.name}</span>
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400 rotate-icon transition-transform" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                  </svg>
+                                </div>
+                                <span className="font-medium text-gray-900">{currency} {personTotal.toFixed(2)}</span>
+                              </div>
+
+                              <div className="hidden border-t border-gray-200">
+                                {personItems.length > 0 ? (
+                                  <div className="p-4 space-y-4">
+                                    {/* Items */}
+                                    <div className="space-y-2">
+                                      {personItems.map((item) => (
+                                        <div key={item.name} className="flex justify-between text-sm text-gray-600">
+                                          <span className="flex items-center gap-2">
+                                            {item.name}
+                                            {item.assigned.length > 1 && (
+                                              <span className="text-xs bg-gray-200 px-1.5 py-0.5 rounded">
+                                                Split {item.assigned.length} ways
+                                              </span>
+                                            )}
+                                          </span>
+                                          <span>{currency} {(item.price / item.assigned.length).toFixed(2)}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+
+                                    {/* Cost Breakdown */}
+                                    <div className="space-y-2 pt-2 border-t border-gray-200">
+                                      <div className="flex justify-between text-sm">
+                                        <span className="text-gray-600">Items Subtotal</span>
+                                        <span>{currency} {itemTotal.toFixed(2)}</span>
+                                      </div>
+                                      {taxShare > 0 && (
+                                        <div className="flex justify-between text-sm">
+                                          <span className="text-gray-600">Tax Share</span>
+                                          <span>{currency} {taxShare.toFixed(2)}</span>
+                                        </div>
+                                      )}
+                                      {serviceShare > 0 && (
+                                        <div className="flex justify-between text-sm">
+                                          <span className="text-gray-600">Service Charge Share</span>
+                                          <span>{currency} {serviceShare.toFixed(2)}</span>
+                                        </div>
+                                      )}
+                                      {otherShare > 0 && (
+                                        <div className="flex justify-between text-sm">
+                                          <span className="text-gray-600">Other Charges Share</span>
+                                          <span>{currency} {otherShare.toFixed(2)}</span>
+                                        </div>
+                                      )}
+                                      {discountShare > 0 && (
+                                        <div className="flex justify-between text-sm text-green-600">
+                                          <span>Discount Share</span>
+                                          <span>- {currency} {discountShare.toFixed(2)}</span>
+                                        </div>
+                                      )}
+                                      <div className="flex justify-between pt-2 border-t border-gray-200 font-medium">
+                                        <span>Total</span>
+                                        <span>{currency} {personTotal.toFixed(2)}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-gray-500 p-4">No items assigned yet</p>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              {/* Save & Share Button */}
+              {items.length > 0 && (
+                <div className="mt-6 pt-4 border-t border-gray-200">
+                  {shareLink ? (
+                    <div className="text-center space-y-4">
+                      <div className="bg-green-50 rounded-lg p-4">
+                        <div className="flex items-center justify-center gap-2 text-green-800 mb-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414L11.414 10l-4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                          <span className="font-medium">Split saved successfully!</span>
+                        </div>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(shareLink);
+                            alert('Link copied to clipboard!');
+                          }}
+                          className="w-full bg-white hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 border border-gray-200 rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                            <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                          </svg>
+                          Copy Share Link
+                        </button>
+                      </div>
+                      <div className="flex justify-center">
+                        <button
+                          onClick={() => setShareLink(null)}
+                          className="inline-flex items-center gap-2 text-sm font-medium text-primary-600 hover:text-primary-700"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                          </svg>
+                          Start New Split
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={saveAndShare}
+                      className="w-full btn-primary flex items-center justify-center gap-2 px-8 py-4 text-lg"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
+                    </svg>
+                    Save & Share
+                  </button>
+                  )}
+                </div>
+              )}
+            </div>
           </motion.div>
         </div>
       </div>
 
-      {/* Save & Share Dialog */}
+      {/* Save & Share Modal */}
       {showSaveDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm mx-4"
-          >
-            <h3 className="text-xl font-bold mb-4">Save & Share</h3>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Password (optional)
-              </label>
-              <input
-                type="text"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="input-field"
-                placeholder="Leave empty for no password"
-              />
-              <p className="mt-1 text-sm text-gray-500">
-                If set, people will need this password to edit the split later.
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowSaveDialog(false)}
-                className="flex-1 btn-secondary"
-              >
-                Cancel
-              </button>
-              <button onClick={handleConfirmSave} className="flex-1 btn-primary">
-                Save
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
-
-      {/* Share Link Dialog */}
-      {shareLink && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm mx-4"
-          >
-            <h3 className="text-xl font-bold mb-4">Share Link</h3>
-            <div className="mb-4">
-              <p className="text-sm text-gray-600 mb-2">Copy this link to share the split:</p>
-              <div className="flex gap-2">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Save Split</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Password (Optional)
+                </label>
                 <input
-                  type="text"
-                  value={shareLink}
-                  readOnly
-                  className="input-field flex-1"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="input-field"
+                  placeholder="Leave blank for no password"
                 />
+              </div>
+              <div className="flex justify-end gap-2">
                 <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(shareLink)
-                    alert('Link copied!')
-                  }}
-                  className="btn-primary px-4"
+                  onClick={() => setShowSaveDialog(false)}
+                  className="btn-secondary"
                 >
-                  Copy
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmSave}
+                  className="btn-primary"
+                >
+                  Save Split
                 </button>
               </div>
             </div>
-            <button
-              onClick={() => setShareLink(null)}
-              className="w-full btn-secondary"
-            >
-              Close
-            </button>
-          </motion.div>
+          </div>
         </div>
       )}
     </div>
