@@ -172,10 +172,46 @@ const QuickSplitPage = () => {
                 <div className="space-y-2">
                   {items.map((item, itemIndex) => (
                     <div key={itemIndex} className="flex flex-col bg-gray-50 rounded-lg">
-                      <div className="flex items-center justify-between px-3 py-2">
+                      <div className="flex items-center justify-between px-3 py-2 group">
                         <div className="flex items-baseline gap-2 min-w-0">
-                          <h3 className="font-medium truncate">{item.name}</h3>
-                          <span className="text-sm font-medium text-gray-600">{currency} {item.price.toFixed(2)}</span>
+                          <div className="flex items-center gap-1">
+                            <h3 className="font-medium truncate">{item.name}</h3>
+                            <button
+                              onClick={() => {
+                                const newName = prompt('Enter new item name:', item.name)
+                                if (newName) {
+                                  const newItems = [...items]
+                                  newItems[itemIndex] = { ...item, name: newName }
+                                  setItems(newItems)
+                                }
+                              }}
+                              className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-primary-500 transition-all"
+                              title="Edit name"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                              </svg>
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="text-sm font-medium text-gray-600">{currency} {item.price.toFixed(2)}</span>
+                            <button
+                              onClick={() => {
+                                const newPrice = prompt('Enter new price:', item.price.toString())
+                                if (newPrice && !isNaN(parseFloat(newPrice))) {
+                                  const newItems = [...items]
+                                  newItems[itemIndex] = { ...item, price: parseFloat(newPrice) }
+                                  setItems(newItems)
+                                }
+                              }}
+                              className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-primary-500 transition-all"
+                              title="Edit price"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                              </svg>
+                            </button>
+                          </div>
                         </div>
                         <button
                           onClick={() => setItems(items.filter((_, i) => i !== itemIndex))}
