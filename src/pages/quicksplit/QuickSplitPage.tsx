@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import type { Person, Item, SplitInput, SplitSummary } from '../../utils/splitLogic'
 import { calculateSplit } from '../../utils/splitLogic'
 import { saveAnonymousSplit } from '../../utils/supabaseClient'
+import { AddPersonDialog, AddItemDialog } from '../../components/modals'
 
 // Helper functions for calculations
 const calculateDiscount = (subtotal: number, discount: number, discountType: 'percent' | 'amount'): number => {
@@ -40,7 +41,10 @@ const QuickSplitPage = () => {
   const [summary, setSummary] = useState<SplitSummary | null>(null)
   const [shareLink, setShareLink] = useState<string | null>(null)
   const [showSaveDialog, setShowSaveDialog] = useState(false)
+  const [showAddPersonDialog, setShowAddPersonDialog] = useState(false)
+  const [showAddItemDialog, setShowAddItemDialog] = useState(false)
   const [password, setPassword] = useState('')
+  const [showCopySuccess, setShowCopySuccess] = useState(false)
 
   // Live update summary
   useEffect(() => {
@@ -58,20 +62,18 @@ const QuickSplitPage = () => {
     setSummary(calculateSplit(input))
   }, [people, items, taxAmount, serviceAmount, otherCharges, discount, discountType, currency, vendorName])
 
-  const addPerson = () => {
-    const name = prompt('Enter person name:')
-    if (name) {
-      setPeople([...people, { name }])
-    }
-  }
+  const addPerson = () => setShowAddPersonDialog(true);
 
-  const addItem = () => {
-    const name = prompt('Enter item name:')
-    const price = parseFloat(prompt('Enter item price:') || '0')
-    if (name && !isNaN(price)) {
-      setItems([...items, { name, price, assigned: [] }])
-    }
-  }
+  const handleAddPerson = (name: string) => {
+    // Update in batch to avoid state overwrite issues
+    setPeople(prevPeople => [...prevPeople, { name }]);
+  };
+
+  const addItem = () => setShowAddItemDialog(true);
+
+  const handleAddItem = (name: string, price: number) => {
+    setItems([...items, { name, price, assigned: [] }]);
+  };
 
   const assignPersonToItem = (itemIndex: number, personName: string) => {
     const newItems = [...items]
@@ -602,22 +604,55 @@ const QuickSplitPage = () => {
                           <span className="font-medium">Split saved successfully!</span>
                         </div>
                         <button
-                          onClick={() => {
-                            navigator.clipboard.writeText(shareLink);
-                            alert('Link copied to clipboard!');
+                          onClick={async () => {
+                            await navigator.clipboard.writeText(shareLink);
+                            setShowCopySuccess(true);
+                            setTimeout(() => setShowCopySuccess(false), 2000);
                           }}
-                          className="w-full bg-white hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 border border-gray-200 rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2"
+                          className="w-full bg-white hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 border border-gray-200 rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2 relative"
+                          disabled={showCopySuccess}
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
-                            <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
-                          </svg>
-                          Copy Share Link
+                          {showCopySuccess ? (
+                            <motion.div
+                              initial={{ opacity: 0, y: -10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0 }}
+                              className="flex items-center gap-2"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l7-7a1 1 0 00-1.414-1.414L10 11.414l-4.293-4.293a1 1 0 00-1.414 1.414L9 13.414l4.293-4.293z" />
+                              </svg>
+                              <span className="text-green-600">Copied!</span>
+                            </motion.div>
+                          ) : (
+                            <>
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                                <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                              </svg>
+                              Copy Share Link
+                            </>
+                          )}
                         </button>
                       </div>
                       <div className="flex justify-center">
                         <button
-                          onClick={() => setShareLink(null)}
+                          onClick={() => {
+                            setPeople([]);
+                            setItems([]);
+                            setTaxAmount(0);
+                            setServiceAmount(0);
+                            setOtherCharges(0);
+                            setDiscount(0);
+                            setDiscountType('amount');
+                            setCurrency('USD');
+                            setVendorName('');
+                            setSummary(null);
+                            setShareLink(null);
+                            setShowSaveDialog(false);
+                            setShowCopySuccess(false);
+                            setPassword('');
+                          }}
                           className="inline-flex items-center gap-2 text-sm font-medium text-primary-600 hover:text-primary-700"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -681,6 +716,21 @@ const QuickSplitPage = () => {
           </div>
         </div>
       )}
+
+      {/* Add Person Dialog */}
+      <AddPersonDialog
+        isOpen={showAddPersonDialog}
+        onClose={() => setShowAddPersonDialog(false)}
+        onAdd={handleAddPerson}
+      />
+
+      {/* Add Item Dialog */}
+      <AddItemDialog
+        isOpen={showAddItemDialog}
+        onClose={() => setShowAddItemDialog(false)}
+        onAdd={handleAddItem}
+        currency={currency}
+      />
     </div>
   )
 }
