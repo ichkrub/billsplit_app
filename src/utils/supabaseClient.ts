@@ -58,6 +58,30 @@ export const saveAnonymousSplit = async (split: SplitInput & { password?: string
 }
 
 /**
+ * Update an existing anonymous split in Supabase
+ */
+export const updateAnonymousSplit = async (id: string, split: SplitInput & { password?: string }): Promise<void> => {
+  const { error } = await supabase
+    .from('anonymous_splits')
+    .update({
+      people: split.people,
+      items: split.items,
+      tax_amount: split.taxAmount,
+      service_amount: split.serviceAmount,
+      discount: split.discount,
+      discount_type: split.discountType,
+      currency: split.currency,
+      password: split.password || null,
+      vendor_name: split.vendorName || null,
+    })
+    .eq('id', id);
+
+  if (error) {
+    throw new Error(`Failed to update split: ${error.message}`);
+  }
+}
+
+/**
  * Get an anonymous split by ID
  */
 export const getAnonymousSplit = async (id: string): Promise<AnonymousSplit> => {
@@ -72,4 +96,4 @@ export const getAnonymousSplit = async (id: string): Promise<AnonymousSplit> => 
   }
 
   return data
-} 
+}

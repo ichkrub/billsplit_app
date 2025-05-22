@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { CheckCircleIcon, CheckIcon } from '@heroicons/react/24/solid'
 import type { Person, Item, SplitInput, SplitSummary } from '../../utils/splitLogic'
 import { calculateSplit } from '../../utils/splitLogic'
-import { saveAnonymousSplit } from '../../utils/supabaseClient'
+import { saveAnonymousSplit, updateAnonymousSplit } from '../../utils/supabaseClient'
 import { AddPersonDialog, AddItemDialog } from '../../components/modals'
 
 // Helper functions for calculations
@@ -46,6 +47,7 @@ const QuickSplitPage = () => {
   const [editingItem, setEditingItem] = useState<{ index: number; item: Item } | null>(null)
   const [password, setPassword] = useState('')
   const [showCopySuccess, setShowCopySuccess] = useState(false)
+  const [splitId, setSplitId] = useState<string | null>(null)
 
   // Live update summary
   useEffect(() => {
@@ -117,13 +119,89 @@ const QuickSplitPage = () => {
         vendorName,
         password: password || undefined,
       }
-      const id = await saveAnonymousSplit(input)
-      setShareLink(`${window.location.origin}/split/${id}`)
-      setShowSaveDialog(false)
-      setPassword('') // Reset password after successful save
+
+      let saveId: string;
+      
+      if (splitId) {
+        // Update existing split
+        await updateAnonymousSplit(splitId, input);
+        saveId = splitId;
+      } else {
+        // Save new split
+        saveId = await saveAnonymousSplit(input);
+        setSplitId(saveId);
+      }
+
+      // Generate share URL
+      const shareUrl = `${window.location.origin}/split/${saveId}`;
+
+      // Set share link in UI
+      setShareLink(shareUrl);
+      setShowSaveDialog(false); 
+      setPassword(''); // Reset password after successful save
+
+      // First try native share on mobile devices
+      const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (isMobileDevice && typeof navigator.share === 'function') {
+        try {
+          await navigator.share({
+            title: 'SplitFair - Shared Bill Split',
+            text: `${vendorName ? `Check out the bill split for ${vendorName}` : 'Check out this bill split'} on SplitFair!`,
+            url: shareUrl
+          });
+          // Return early if share succeeds
+          return;
+        } catch (err) {
+          // If user cancels, don't try clipboard
+          if (err instanceof Error && err.name === 'AbortError') {
+            return;
+          }
+          console.log('Share failed, trying clipboard:', err);
+        }
+      }
+
+      // Then try the modern clipboard API
+      try {
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+          await navigator.clipboard.writeText(shareUrl);
+          setShowCopySuccess(true);
+          setTimeout(() => setShowCopySuccess(false), 2000);
+          return;
+        }
+      } catch (err) {
+        console.log('Clipboard API failed, trying fallback:', err);
+      }
+
+      // Finally try the legacy execCommand method
+      try {
+        const textarea = document.createElement('textarea');
+        textarea.value = shareUrl;
+        // Place in viewport but make it "invisible"
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        textarea.style.pointerEvents = 'none';
+        textarea.style.zIndex = '-1';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+
+        const success = document.execCommand('copy');
+        textarea.remove();
+
+        if (success) {
+          setShowCopySuccess(true);
+          setTimeout(() => setShowCopySuccess(false), 2000);
+        } else {
+          throw new Error('execCommand returned false');
+        }
+      } catch (err) {
+        console.error('All clipboard methods failed:', err);
+        alert('Unable to copy automatically. Please copy this link manually:\n\n' + shareUrl);
+      }
+
     } catch (error) {
-      console.error('Failed to save split:', error)
-      alert('Failed to save split. Please try again.')
+      console.error('Failed to save split:', error);
+      alert('Failed to save split. Please try again.');
     }
   }
 
@@ -586,16 +664,67 @@ const QuickSplitPage = () => {
                     <div className="text-center space-y-4">
                       <div className="bg-green-50 rounded-lg p-4">
                         <div className="flex items-center justify-center gap-2 text-green-800 mb-2">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414L11.414 10l-4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                          </svg>
+                          <CheckCircleIcon className="h-5 w-5 text-green-500" />
                           <span className="font-medium">Split saved successfully!</span>
                         </div>
                         <button
                           onClick={async () => {
-                            await navigator.clipboard.writeText(shareLink);
-                            setShowCopySuccess(true);
-                            setTimeout(() => setShowCopySuccess(false), 2000);
+                            // First attempt: Web Share API for mobile devices
+                            const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                            if (isMobileDevice && typeof navigator.share === 'function') {
+                              try {
+                                await navigator.share({
+                                  title: 'SplitFair - Shared Bill Split',
+                                  text: `${vendorName ? `Check out the bill split for ${vendorName}` : 'Check out this bill split'} on SplitFair!`,
+                                  url: shareLink
+                                });
+                                return;
+                              } catch (err) {
+                                if (err instanceof Error && err.name === 'AbortError') {
+                                  return; // User cancelled share, don't fallback
+                                }
+                                console.log('Share failed, trying clipboard:', err);
+                              }
+                            }
+
+                            // Second attempt: Modern navigator.clipboard API
+                            try {
+                              if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+                                await navigator.clipboard.writeText(shareLink);
+                                setShowCopySuccess(true);
+                                setTimeout(() => setShowCopySuccess(false), 2000);
+                                return;
+                              }
+                            } catch (err) {
+                              console.log('Clipboard API failed, trying fallback:', err);
+                            }
+
+                            // Final attempt: Legacy execCommand with textarea
+                            try {
+                              const textarea = document.createElement('textarea');
+                              textarea.value = shareLink;
+                              // Place in viewport but make it "invisible"
+                              textarea.style.position = 'fixed';
+                              textarea.style.opacity = '0';
+                              textarea.style.pointerEvents = 'none';
+                              textarea.style.zIndex = '-1';
+                              document.body.appendChild(textarea);
+                              textarea.focus();
+                              textarea.select();
+
+                              const success = document.execCommand('copy');
+                              textarea.remove();
+
+                              if (success) {
+                                setShowCopySuccess(true);
+                                setTimeout(() => setShowCopySuccess(false), 2000);
+                              } else {
+                                throw new Error('execCommand returned false');
+                              }
+                            } catch (err) {
+                              console.error('All clipboard methods failed:', err);
+                              alert('Unable to copy automatically. Please copy this link manually:\n\n' + shareLink);
+                            }
                           }}
                           className="w-full bg-white hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 border border-gray-200 rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2 relative"
                           disabled={showCopySuccess}
@@ -607,16 +736,14 @@ const QuickSplitPage = () => {
                               exit={{ opacity: 0 }}
                               className="flex items-center gap-2"
                             >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l7-7a1 1 0 00-1.414-1.414L10 11.414l-4.293-4.293a1 1 0 00-1.414 1.414L9 13.414l4.293-4.293z" />
-                              </svg>
-                              <span className="text-green-600">Copied!</span>
+                              <CheckIcon className="h-5 w-5 text-green-500" />
+                              <span className="text-green-600 font-medium">Copied!</span>
                             </motion.div>
                           ) : (
                             <>
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
-                                <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                                <path d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H9z" />
+                                <path d="M3 8a2 2 0 012-2v10h8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" />
                               </svg>
                               Copy Share Link
                             </>
