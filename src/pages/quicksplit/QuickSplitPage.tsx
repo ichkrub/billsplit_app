@@ -134,15 +134,15 @@ const QuickSplitPage = () => {
               {people.length === 0 ? (
                 <p className="text-gray-500 text-center py-4">No people added yet</p>
               ) : (
-                <div className="space-y-2">
+                <div className="flex flex-wrap gap-2">
                   {people.map((person, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <span className="font-medium">{person.name}</span>
+                    <div key={index} className="inline-flex items-center px-3 py-1.5 bg-primary-50 text-primary-700 rounded-full border border-primary-200 group hover:bg-primary-100 transition-colors">
+                      <span className="font-medium text-sm">{person.name}</span>
                       <button
                         onClick={() => setPeople(people.filter((_, i) => i !== index))}
-                        className="text-gray-400 hover:text-red-500 transition-colors"
+                        className="ml-2 text-primary-400 hover:text-primary-600 transition-colors"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                         </svg>
                       </button>
@@ -169,38 +169,39 @@ const QuickSplitPage = () => {
               {items.length === 0 ? (
                 <p className="text-gray-500 text-center py-4">No items added yet</p>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-2">
                   {items.map((item, itemIndex) => (
-                    <div key={itemIndex} className="p-4 bg-gray-50 rounded-lg">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <h3 className="font-medium">{item.name}</h3>
-                          <p className="text-sm text-gray-500">{currency} {item.price.toFixed(2)}</p>
+                    <div key={itemIndex} className="flex flex-col bg-gray-50 rounded-lg">
+                      <div className="flex items-center justify-between px-3 py-2">
+                        <div className="flex items-baseline gap-2 min-w-0">
+                          <h3 className="font-medium truncate">{item.name}</h3>
+                          <span className="text-sm font-medium text-gray-600">{currency} {item.price.toFixed(2)}</span>
                         </div>
                         <button
                           onClick={() => setItems(items.filter((_, i) => i !== itemIndex))}
-                          className="text-gray-400 hover:text-red-500 transition-colors"
+                          className="ml-2 p-1 text-gray-400 hover:text-red-500 transition-colors"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                           </svg>
                         </button>
                       </div>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {people.map((person, personIndex) => (
-                          <label
-                            key={personIndex}
-                            className="inline-flex items-center px-3 py-1 bg-white rounded border border-gray-200 cursor-pointer hover:border-primary-500 transition-colors"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={item.assigned.includes(person.name)}
-                              onChange={() => assignPersonToItem(itemIndex, person.name)}
-                              className="mr-2 text-primary-600 focus:ring-primary-500"
-                            />
-                            <span className="text-sm">{person.name}</span>
-                          </label>
-                        ))}
+                      <div className="px-3 py-2 border-t border-gray-100">
+                        <div className="flex flex-wrap gap-1">
+                          {people.map((person, personIndex) => (
+                            <button
+                              key={personIndex}
+                              onClick={() => assignPersonToItem(itemIndex, person.name)}
+                              className={`px-2 py-1 rounded text-sm transition-all ${
+                                item.assigned.includes(person.name)
+                                  ? 'bg-primary-100 text-primary-700 font-medium shadow-sm'
+                                  : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
+                              }`}
+                            >
+                              {person.name}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   ))}
