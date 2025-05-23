@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { CheckCircleIcon, CheckIcon } from '@heroicons/react/24/solid'
-import type { Person, Item, SplitInput, SplitSummary } from '../../utils/splitLogic'
-import { calculateSplit } from '../../utils/splitLogic'
+import type { Person, Item, SplitInput } from '../../utils/splitLogic'
 import { saveAnonymousSplit, updateAnonymousSplit } from '../../utils/supabaseClient'
 import { AddPersonDialog, AddItemDialog } from '../../components/modals'
 
@@ -20,15 +19,6 @@ const calculateTotal = (items: Item[], taxAmount: number, serviceAmount: number,
   return subtotal + taxAmount + serviceAmount + otherCharges - discountAmount;
 }
 
-const calculatePersonTotal = (itemTotal: number, items: Item[], taxAmount: number, serviceAmount: number, otherCharges: number, discount: number, discountType: 'percent' | 'amount'): number => {
-  const billTotal = calculateTotal(items, taxAmount, serviceAmount, otherCharges, discount, discountType);
-  const subtotal = items.reduce((sum, item) => sum + (isNaN(item.price) ? 0 : item.price), 0);
-  if (subtotal === 0) return 0;
-  // Calculate person's share of additional charges proportionally
-  const additionalChargesShare = (itemTotal / subtotal) * (billTotal - subtotal);
-  return itemTotal + additionalChargesShare;
-}
-
 const QuickSplitPage = () => {
   const [people, setPeople] = useState<Person[]>([])
   const [items, setItems] = useState<Item[]>([])
@@ -39,7 +29,6 @@ const QuickSplitPage = () => {
   const [discountType, setDiscountType] = useState<'percent' | 'amount'>('amount')
   const [currency, setCurrency] = useState('USD')
   const [vendorName, setVendorName] = useState('')
-  const [summary, setSummary] = useState<SplitSummary | null>(null)
   const [shareLink, setShareLink] = useState<string | null>(null)
   const [showSaveDialog, setShowSaveDialog] = useState(false)
   const [showAddPersonDialog, setShowAddPersonDialog] = useState(false)
@@ -49,21 +38,7 @@ const QuickSplitPage = () => {
   const [showCopySuccess, setShowCopySuccess] = useState(false)
   const [splitId, setSplitId] = useState<string | null>(null)
 
-  // Live update summary
-  useEffect(() => {
-    const input: SplitInput = {
-      people,
-      items,
-      taxAmount,
-      serviceAmount,
-      otherCharges,
-      discount,
-      discountType,
-      currency,
-      vendorName,
-    }
-    setSummary(calculateSplit(input))
-  }, [people, items, taxAmount, serviceAmount, otherCharges, discount, discountType, currency, vendorName])
+
 
   const addPerson = () => setShowAddPersonDialog(true);
 
@@ -767,7 +742,6 @@ const QuickSplitPage = () => {
                             setDiscountType('amount');
                             setCurrency('USD');
                             setVendorName('');
-                            setSummary(null);
                             setShareLink(null);
                             setShowSaveDialog(false);
                             setShowCopySuccess(false);
