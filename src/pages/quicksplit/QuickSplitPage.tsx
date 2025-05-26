@@ -50,16 +50,16 @@ const QuickSplitPage = () => {
 
   const addItem = () => setShowAddItemDialog(true);
 
-  const handleAddItem = (name: string, price: number) => {
+  const handleAddItem = (name: string, price: number, assigned: string[]) => {
     if (editingItem) {
       // Edit existing item
       const newItems = [...items];
-      newItems[editingItem.index] = { ...editingItem.item, name, price };
+      newItems[editingItem.index] = { ...editingItem.item, name, price, assigned };
       setItems(newItems);
       setEditingItem(null);
     } else {
       // Add new item
-      setItems([...items, { name, price, assigned: [] }]);
+      setItems([...items, { name, price, assigned }]);
     }
   };
 
@@ -867,6 +867,7 @@ const QuickSplitPage = () => {
         onAdd={handleAddItem}
         currency={currency}
         editItem={editingItem}
+        people={people}
       />
     </div>
   )
