@@ -57,38 +57,67 @@ const LandingPage = () => {
 	return (
 		<div className="flex-1">
 			{/* Hero Section with gradient background */}
-			<div className="relative bg-gradient-to-br from-primary-50 via-white to-primary-100">
-				<div className="absolute inset-0 bg-gradient-to-b from-transparent to-white/80" />
-				<div className="max-w-7xl mx-auto px-4 pt-24 pb-32">
-					<div className="relative min-h-[70vh] flex flex-col justify-center items-center">
-						<motion.div
-							initial={{ opacity: 0, y: 20 }}
-							animate={{ opacity: 1, y: 0 }}
-							transition={{ duration: 0.7 }}
-							className="max-w-3xl w-full text-center"
-						>
-							<h1 className={styleGuide.typography.h1.hero + " mb-8"}>
-								Split bills instantly — no login, no math, no stress.
-							</h1>
-							<p className={`${styleGuide.typography.subtitle.hero} mb-12 max-w-2xl mx-auto`}>
-								Add people, assign items, and SplitFair handles the rest. Share a smart bill link in seconds — all for free.
-							</p>
-							<div className="flex flex-col sm:flex-row justify-center gap-6">
-								<Link
-									to="/quicksplit"
-									className={`${styleGuide.components.button.base} ${styleGuide.components.button.primary} ${styleGuide.components.button.sizes.lg}`}
-								>
-									Try It Now
-								</Link>
-								<span className={`${styleGuide.components.button.base} ${styleGuide.components.button.secondary} ${styleGuide.components.button.sizes.lg} cursor-not-allowed select-none gap-3`}>
-									<LockClosedIcon className="h-6 w-6 text-primary-400" />
-									Coming soon: Group features
-								</span>
+			<section className="relative">
+				{/* Background Gradients */}
+				<div className="absolute inset-0 z-0 bg-[linear-gradient(225deg,#E7F9D3_0%,#F8FAFC_100%)]" />
+				<div className="absolute inset-0 z-10 bg-[radial-gradient(circle_at_top_right,#0077CC33_0%,transparent_80%)]" />
+				<div className="absolute inset-0 z-20 bg-[linear-gradient(180deg,rgba(255,255,255,0)_0%,rgba(255,255,255,1)_95%)]" />
+				
+				{/* Content Container */}
+				<div className="relative z-30 min-h-[90vh] flex flex-col justify-between">
+					<div className="max-w-7xl mx-auto px-4 pt-16 pb-8 flex-1 flex flex-col justify-between">
+						{/* Main Content */}
+						<div className="flex-1 flex flex-col justify-center items-center">
+							<motion.div
+								initial={{ opacity: 0, y: 20 }}
+								animate={{ opacity: 1, y: 0 }}
+								transition={{ duration: 0.7 }}
+								className="max-w-3xl w-full text-center"
+							>
+								<h1 className={styleGuide.typography.h1.hero + " mb-8"}>
+									Split bills instantly — no login, no math, no stress.
+								</h1>
+								<p className={`${styleGuide.typography.subtitle.hero} mb-12 max-w-2xl mx-auto`}>
+									Add people, assign items, and SplitFair handles the rest. Share a smart bill link in seconds — all for free.
+								</p>
+								<div className="flex flex-col sm:flex-row justify-center gap-6">
+									<Link
+										to="/quicksplit"
+										className={`${styleGuide.components.button.base} ${styleGuide.components.button.primary} ${styleGuide.components.button.sizes.lg}`}
+									>
+										Try It Now
+									</Link>
+									<span className={`${styleGuide.components.button.base} ${styleGuide.components.button.secondary} ${styleGuide.components.button.sizes.lg} cursor-not-allowed select-none gap-3`}>
+										<LockClosedIcon className="h-6 w-6 text-primary-400" />
+										Coming soon: Group features
+									</span>
+								</div>
+							</motion.div>
+						</div>
+						
+						{/* Trusted For Section */}
+						<div className="w-full mt-auto pt-16">
+							<div className="flex flex-col items-center gap-4">
+								<p className="text-sm font-medium text-gray-600 uppercase tracking-wider">Trusted for</p>
+								<div className="flex flex-wrap justify-center gap-4 text-lg text-primary-700">
+									<span className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 border border-primary-100 hover:bg-white transition-colors">
+										🍜 Meals with friends
+									</span>
+									<span className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 border border-primary-100 hover:bg-white transition-colors">
+										✈️ Group trips
+									</span>
+									<span className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 border border-primary-100 hover:bg-white transition-colors">
+										🏡 Shared bills
+									</span>
+									<span className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 border border-primary-100 hover:bg-white transition-colors">
+										👫 Couples spending
+									</span>
+								</div>
 							</div>
-						</motion.div>
+						</div>
 					</div>
 				</div>
-			</div>
+			</section>
 			
 			{/* Benefits Section */}
 			<motion.div
