@@ -25,6 +25,7 @@ export interface AnonymousSplit {
   currency: string
   password?: string
   vendor_name?: string
+  bill_date?: string
   created_at: string
 }
 
@@ -43,8 +44,8 @@ export const saveAnonymousSplit = async (split: SplitInput & { password?: string
         discount: split.discount,
         discount_type: split.discountType,
         currency: split.currency,
-        password: split.password || null,
         vendor_name: split.vendorName || null,
+        bill_date: split.billDate ? split.billDate : null,
       },
     ])
     .select('id')
@@ -71,8 +72,8 @@ export const updateAnonymousSplit = async (id: string, split: SplitInput & { pas
       discount: split.discount,
       discount_type: split.discountType,
       currency: split.currency,
-      password: split.password || null,
       vendor_name: split.vendorName || null,
+      bill_date: split.billDate || null,
     })
     .eq('id', id);
 

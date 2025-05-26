@@ -164,9 +164,12 @@ const SharedSplitPage: React.FC = () => {
             Shared Bill Split
           </h1>
           {split?.vendor_name && (
-            <p className="text-lg text-gray-600">
-              Bill from {split.vendor_name}
-            </p>
+            <div className="text-lg text-gray-600">
+              <p>Bill from {split.vendor_name}</p>
+              {split.bill_date && (
+                <p className="text-sm mt-1">{new Date(split.bill_date).toLocaleDateString()}</p>
+              )}
+            </div>
           )}
         </motion.div>
 

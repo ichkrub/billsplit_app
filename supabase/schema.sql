@@ -8,6 +8,7 @@ CREATE TABLE anonymous_splits (
   discount FLOAT NOT NULL DEFAULT 0,
   discount_type TEXT NOT NULL CHECK (discount_type IN ('percent', 'amount')),
   currency TEXT NOT NULL,
+  bill_date DATE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

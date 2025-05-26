@@ -28,6 +28,7 @@ export interface SplitInput {
   discountType: 'percent' | 'amount';
   currency: string;
   vendorName?: string;
+  billDate?: string;
 }
 
 /**

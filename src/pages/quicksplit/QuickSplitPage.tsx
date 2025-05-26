@@ -29,6 +29,7 @@ const QuickSplitPage = () => {
   const [discountType, setDiscountType] = useState<'percent' | 'amount'>('amount')
   const [currency, setCurrency] = useState('USD')
   const [vendorName, setVendorName] = useState('')
+  const [billDate, setBillDate] = useState(new Date().toISOString().split('T')[0])
   const [shareLink, setShareLink] = useState<string | null>(null)
   const [showSaveDialog, setShowSaveDialog] = useState(false)
   const [showAddPersonDialog, setShowAddPersonDialog] = useState(false)
@@ -82,18 +83,24 @@ const QuickSplitPage = () => {
 
   const handleConfirmSave = async () => {
     try {
+      // Format the date to YYYY-MM-DD format for Postgres
+      const formattedDate = billDate ? new Date(billDate).toISOString().split('T')[0] : undefined;
+
       const input: SplitInput & { password?: string } = {
         people,
         items,
         taxAmount,
         serviceAmount,
-        otherCharges,
+        otherCharges: otherCharges || 0, // Ensure otherCharges is not undefined
         discount,
         discountType,
         currency,
         vendorName,
+        billDate: formattedDate,
         password: password || undefined,
       }
+
+      console.log('Saving split with data:', input); // Debug log
 
       let saveId: string;
       
@@ -176,7 +183,16 @@ const QuickSplitPage = () => {
 
     } catch (error) {
       console.error('Failed to save split:', error);
-      alert('Failed to save split. Please try again.');
+      let errorMessage = 'Failed to save split. ';
+      if (error instanceof Error) {
+        errorMessage += error.message;
+        console.error('Error details:', {
+          name: error.name,
+          message: error.message,
+          stack: error.stack
+        });
+      }
+      alert(errorMessage);
     }
   }
 
@@ -198,7 +214,6 @@ const QuickSplitPage = () => {
           </p>
         </motion.div>
 
-        {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Column - People & Items */}
           <motion.div
@@ -323,6 +338,7 @@ const QuickSplitPage = () => {
             <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Bill Details</h2>
               <div className="space-y-4">
+                {/* Details Form */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Vendor Name
@@ -335,14 +351,27 @@ const QuickSplitPage = () => {
                     placeholder="Restaurant name or vendor"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Currency
-                  </label>                    <select
-                    value={currency}
-                    onChange={(e) => setCurrency(e.target.value)}
-                    className="input-field"
-                  >
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Date
+                    </label>
+                    <input
+                      type="date"
+                      value={billDate}
+                      onChange={(e) => setBillDate(e.target.value)}
+                      className="input-field"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Currency
+                    </label>
+                    <select
+                      value={currency}
+                      onChange={(e) => setCurrency(e.target.value)}
+                      className="input-field"
+                    >
                     {/* Most Used */}
                     <option value="USD">USD ($)</option>
                     <option value="SGD">SGD (S$)</option>
@@ -370,7 +399,10 @@ const QuickSplitPage = () => {
                     <option value="CAD">CAD (C$)</option>
                     <option value="INR">INR (₹)</option>
                   </select>
+                  </div>
                 </div>
+                
+                {/* Additional Charges */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -383,11 +415,12 @@ const QuickSplitPage = () => {
                       className="input-field"
                       min="0"
                       step="0.01"
+                      placeholder="0.00"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Service Amount
+                      Service Charge
                     </label>
                     <input
                       type="number"
@@ -396,9 +429,11 @@ const QuickSplitPage = () => {
                       className="input-field"
                       min="0"
                       step="0.01"
+                      placeholder="0.00"
                     />
                   </div>
                 </div>
+                
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -426,6 +461,7 @@ const QuickSplitPage = () => {
                         className="input-field"
                         min="0"
                         step="0.01"
+                        placeholder="0.00"
                       />
                       <select
                         value={discountType}
@@ -433,7 +469,7 @@ const QuickSplitPage = () => {
                         className="input-field w-24"
                       >
                         <option value="percent">%</option>
-                        <option value="amount">$</option>
+                        <option value="amount">{currency}</option>
                       </select>
                     </div>
                   </div>
@@ -461,7 +497,10 @@ const QuickSplitPage = () => {
                   {vendorName && (
                     <div className="text-gray-600 border-b pb-3">
                       <h3 className="font-medium text-lg">{vendorName}</h3>
-                      <p className="text-sm">{items.length} item{items.length !== 1 ? 's' : ''}</p>
+                      <div className="text-sm flex items-center gap-4">
+                        <p>{items.length} item{items.length !== 1 ? 's' : ''}</p>
+                        {billDate && <p>{new Date(billDate).toLocaleDateString()}</p>}
+                      </div>
                     </div>
                   )}
 
@@ -833,4 +872,4 @@ const QuickSplitPage = () => {
   )
 }
 
-export default QuickSplitPage
+export default QuickSplitPage;
