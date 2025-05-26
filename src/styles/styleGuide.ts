@@ -1,5 +1,9 @@
 // SplitFair Style Guide
 export const styleGuide = {
+  fontFamily: {
+    sans: '"General Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+  },
+
   // Colors
   colors: {
     primary: {
@@ -44,21 +48,21 @@ export const styleGuide = {
   typography: {
     // Headers
     h1: {
-      hero: 'text-[3.2rem] md:text-[4.4rem] font-bold tracking-tight leading-[105%] text-primary-900',
-      page: 'text-[2.5rem] md:text-[3rem] font-bold tracking-tight text-gray-900 mb-4',
+      hero: 'text-[3.2rem] md:text-[5rem] font-bold leading-[1.1] tracking-tight text-primary-900',
+      page: 'text-[2.5rem] md:text-[3.25rem] font-bold tracking-tight text-gray-900 mb-4',
     },
-    h2: 'text-[2rem] md:text-[2.5rem] font-bold tracking-tight text-gray-900 mb-4',
-    h3: 'text-[1.5rem] md:text-[2rem] font-bold text-gray-800 mb-3',
-    h4: 'text-[1.25rem] md:text-[1.5rem] font-semibold text-gray-800 mb-2',
+    h2: 'text-[2.125rem] md:text-[2.5rem] font-bold leading-[1.2] tracking-tight text-gray-900 mb-4',
+    h3: 'text-[1.75rem] md:text-[2.25rem] font-semibold text-gray-800 mb-3',
+    h4: 'text-[1.5rem] md:text-[1.75rem] font-medium text-gray-800 mb-2',
     // Body text
     subtitle: {
-      hero: 'text-[1.25rem] leading-[150%] text-gray-600/90 my-[10px] mx-auto mb-[30px]',
-      section: 'text-[1.15rem] md:text-[1.25rem] text-gray-600/90 leading-[150%]',
+      hero: 'text-[1.125rem] md:text-[1.25rem] leading-[1.6] text-gray-600/90 my-[10px] mx-auto mb-[30px]',
+      section: 'text-[1.125rem] md:text-[1.25rem] leading-[1.6] text-gray-600/90',
     },
     body: {
-      large: 'text-lg text-gray-600 leading-relaxed',
-      base: 'text-base text-gray-600 leading-relaxed',
-      small: 'text-sm text-gray-500',
+      large: 'text-lg md:text-xl text-gray-600 leading-[1.75]',
+      base: 'text-base md:text-lg text-gray-600 leading-[1.75]',
+      small: 'text-sm md:text-base text-gray-500',
     },
     // Interactive elements
     button: {
@@ -70,8 +74,19 @@ export const styleGuide = {
 
   // Spacing
   spacing: {
-    section: 'py-16',
-    container: 'max-w-6xl mx-auto px-4',
+    section: {
+      base: 'py-24 md:py-32', // Increased base padding
+      tight: 'py-16 md:py-20', // Increased tight padding
+      spacious: 'py-32 md:py-40', // More spacious option for hero sections
+      hero: 'pt-32 pb-24 md:pt-40 md:pb-32', // Special hero section padding
+    },
+    container: 'max-w-6xl mx-auto px-4 md:px-6', // Added responsive horizontal padding
+    gap: {
+      sm: 'gap-4',
+      md: 'gap-6',
+      lg: 'gap-8',
+      xl: 'gap-12'
+    }
   },
 
   // Components
@@ -86,6 +101,7 @@ export const styleGuide = {
       base: 'font-bold rounded-[8px] transition-all duration-200 inline-flex items-center justify-center',
       primary: 'bg-primary-600 text-white hover:bg-primary-700 shadow-[0_2px_6px_rgba(0,0,0,0.05)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:-translate-y-[1px] active:translate-y-[1px]',
       secondary: 'bg-white text-primary-700 border border-primary-200 hover:border-primary-300 hover:-translate-y-[1px] active:translate-y-[1px]',
+      alternate: 'bg-secondary-500 text-primary-900 hover:bg-secondary-400 shadow-[0_2px_6px_rgba(0,0,0,0.05)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:-translate-y-[1px] active:translate-y-[1px]',
       sizes: {
         sm: 'px-5 py-2.5 text-[14px]',
         md: 'px-6 py-3 text-[16px]',
