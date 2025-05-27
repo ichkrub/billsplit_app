@@ -284,7 +284,7 @@ const QuickSplitPage = () => {
                     type="text"
                     value={vendorName}
                     onChange={(e) => setVendorName(e.target.value)}
-                    className="input-field"
+                    className="input-field w-full"
                     placeholder="Restaurant name or vendor"
                   />
                 </div>
@@ -297,7 +297,8 @@ const QuickSplitPage = () => {
                       type="date"
                       value={billDate}
                       onChange={(e) => setBillDate(e.target.value)}
-                      className="input-field"
+                      className="input-field w-full text-sm appearance-none bg-white"
+                      style={{ minHeight: '42px' }}
                     />
                   </div>
                   <div>
@@ -307,7 +308,7 @@ const QuickSplitPage = () => {
                     <select
                       value={currency}
                       onChange={(e) => setCurrency(e.target.value)}
-                      className="input-field"
+                      className="input-field w-full text-sm bg-white h-[42px]"
                     >
                     {/* Most Used */}
                     <option value="USD">USD ($)</option>
