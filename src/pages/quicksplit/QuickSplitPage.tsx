@@ -348,7 +348,7 @@ const QuickSplitPage = () => {
                     </label>
                     <input
                       type="number"
-                      value={taxAmount}
+                      value={taxAmount || ''}
                       onChange={(e) => setTaxAmount(Number(e.target.value))}
                       className="input-field"
                       min="0"
@@ -362,7 +362,7 @@ const QuickSplitPage = () => {
                     </label>
                     <input
                       type="number"
-                      value={serviceAmount}
+                      value={serviceAmount || ''}
                       onChange={(e) => setServiceAmount(Number(e.target.value))}
                       className="input-field"
                       min="0"
@@ -379,7 +379,7 @@ const QuickSplitPage = () => {
                     </label>
                     <input
                       type="number"
-                      value={otherCharges}
+                      value={otherCharges || ''}
                       onChange={(e) => setOtherCharges(Number(e.target.value))}
                       className="input-field"
                       min="0"
@@ -394,7 +394,7 @@ const QuickSplitPage = () => {
                     <div className="flex gap-2">
                       <input
                         type="number"
-                        value={discount}
+                        value={discount || ''}
                         onChange={(e) => setDiscount(Number(e.target.value))}
                         className="input-field"
                         min="0"
