@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { LightBulbIcon, UserGroupIcon, LinkIcon, ChevronDownIcon, LockClosedIcon, ClockIcon } from '@heroicons/react/24/outline'
+import { LightBulbIcon, UserGroupIcon, LinkIcon, ChevronDownIcon, LockClosedIcon } from '@heroicons/react/24/outline'
 import { styleGuide } from '../../styles/styleGuide'
 
 const benefits = [
