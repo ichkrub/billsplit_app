@@ -34,6 +34,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 
 export interface AnonymousSplit {
   id: string
+  short_id: string
   people: { name: string }[]
   items: {
     name: string
@@ -54,11 +55,26 @@ export interface AnonymousSplit {
 /**
  * Save an anonymous split to Supabase
  */
+// Generate a short, random ID of 8 characters
+const generateShortId = (): string => {
+  // Use a combination of numbers and letters, excluding similar looking characters
+  const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  let result = '';
+  for (let i = 0; i < 8; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+};
+
 export const saveAnonymousSplit = async (split: SplitInput & { password?: string }): Promise<string> => {
+  // Generate a short ID
+  const shortId = generateShortId();
+  
   const { data, error } = await supabase
     .from('anonymous_splits')
     .insert([
       {
+        short_id: shortId,
         people: split.people,
         items: split.items,
         tax_amount: split.taxAmount,
@@ -70,20 +86,45 @@ export const saveAnonymousSplit = async (split: SplitInput & { password?: string
         bill_date: split.billDate ? split.billDate : null,
       },
     ])
-    .select('id')
+    .select('short_id')
     .single()
 
   if (error) {
+    // If there's a conflict (very unlikely but possible), try again
+    if (error.message.includes('duplicate')) {
+      return saveAnonymousSplit(split);
+    }
     throw new Error(`Failed to save split: ${error.message}`)
   }
 
-  return data.id
+  return data.short_id
 }
 
 /**
  * Update an existing anonymous split in Supabase
  */
 export const updateAnonymousSplit = async (id: string, split: SplitInput & { password?: string }): Promise<void> => {
+  // Try to update by short_id first
+  const { error: shortIdError } = await supabase
+    .from('anonymous_splits')
+    .update({
+      people: split.people,
+      items: split.items,
+      tax_amount: split.taxAmount,
+      service_amount: split.serviceAmount,
+      discount: split.discount,
+      discount_type: split.discountType,
+      currency: split.currency,
+      vendor_name: split.vendorName || null,
+      bill_date: split.billDate || null,
+    })
+    .eq('short_id', id);
+
+  if (!shortIdError) {
+    return;
+  }
+
+  // If not found by short_id, try the original UUID
   const { error } = await supabase
     .from('anonymous_splits')
     .update({
@@ -108,6 +149,18 @@ export const updateAnonymousSplit = async (id: string, split: SplitInput & { pas
  * Get an anonymous split by ID
  */
 export const getAnonymousSplit = async (id: string): Promise<AnonymousSplit> => {
+  // Try to find by short_id first, then fall back to UUID for backward compatibility
+  const { data: shortIdData, error: shortIdError } = await supabase
+    .from('anonymous_splits')
+    .select('*')
+    .eq('short_id', id)
+    .single()
+
+  if (!shortIdError && shortIdData) {
+    return shortIdData
+  }
+
+  // If not found by short_id, try the original UUID
   const { data, error } = await supabase
     .from('anonymous_splits')
     .select('*')
