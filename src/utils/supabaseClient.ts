@@ -4,11 +4,33 @@ import type { SplitInput } from './splitLogic'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
+// Add debug logging for environment variables
+console.log('Supabase URL exists:', !!supabaseUrl)
+console.log('Supabase Anon Key exists:', !!supabaseAnonKey)
+
 if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Missing environment variables:', {
+    hasUrl: !!supabaseUrl,
+    hasKey: !!supabaseAnonKey,
+    envKeys: Object.keys(import.meta.env),
+  })
   throw new Error('Missing Supabase environment variables')
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Initialize the Supabase client with improved options
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  },
+  global: {
+    fetch: (...args) => {
+      console.log('Supabase API Call:', args[0])
+      return fetch(...args)
+    }
+  }
+})
 
 export interface AnonymousSplit {
   id: string
@@ -97,4 +119,42 @@ export const getAnonymousSplit = async (id: string): Promise<AnonymousSplit> => 
   }
 
   return data
+}
+
+// Enhanced health check function
+export const checkSupabaseConnection = async () => {
+  try {
+    console.log('Testing Supabase connection...')
+    const start = performance.now()
+    
+    const { data, error } = await supabase
+      .from('anonymous_splits')
+      .select('id')
+      .limit(1)
+    
+    const duration = performance.now() - start
+    
+    if (error) {
+      console.error('Supabase connection test failed:', {
+        error,
+        duration: `${duration.toFixed(2)}ms`,
+        url: supabaseUrl
+      })
+      return false
+    }
+    
+    console.log('Supabase connection test succeeded:', {
+      duration: `${duration.toFixed(2)}ms`,
+      hasData: !!data,
+      url: supabaseUrl
+    })
+    return true
+  } catch (err) {
+    console.error('Failed to connect to Supabase:', {
+      error: err,
+      url: supabaseUrl,
+      stack: err instanceof Error ? err.stack : undefined
+    })
+    return false
+  }
 }
