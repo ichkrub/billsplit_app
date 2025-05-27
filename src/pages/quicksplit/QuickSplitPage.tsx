@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { CheckCircleIcon, CheckIcon } from '@heroicons/react/24/solid'
+import { CheckCircleIcon } from '@heroicons/react/24/solid'
 import type { Person, Item, SplitInput } from '../../utils/splitLogic'
 import { saveAnonymousSplit, updateAnonymousSplit } from '../../utils/supabaseClient'
-import { AddPersonDialog, AddItemDialog } from '../../components/modals'
+import { AddPersonDialog, AddItemDialog, SaveAndShareDialog } from '../../components/modals'
 
 // Helper functions for calculations
 const calculateDiscount = (subtotal: number, discount: number, discountType: 'percent' | 'amount'): number => {
@@ -35,8 +35,6 @@ const QuickSplitPage = () => {
   const [showAddPersonDialog, setShowAddPersonDialog] = useState(false)
   const [showAddItemDialog, setShowAddItemDialog] = useState(false)
   const [editingItem, setEditingItem] = useState<{ index: number; item: Item } | null>(null)
-  const [password, setPassword] = useState('')
-  const [showCopySuccess, setShowCopySuccess] = useState(false)
   const [splitId, setSplitId] = useState<string | null>(null)
 
 
@@ -81,7 +79,7 @@ const QuickSplitPage = () => {
     setShowSaveDialog(true)
   }
 
-  const handleConfirmSave = async () => {
+  const handleConfirmSave = async (password?: string) => {
     try {
       // Format the date to YYYY-MM-DD format for Postgres
       const formattedDate = billDate ? new Date(billDate).toISOString().split('T')[0] : undefined;
@@ -91,16 +89,14 @@ const QuickSplitPage = () => {
         items,
         taxAmount,
         serviceAmount,
-        otherCharges: otherCharges || 0, // Ensure otherCharges is not undefined
+        otherCharges: otherCharges || 0,
         discount,
         discountType,
         currency,
         vendorName,
         billDate: formattedDate,
-        password: password || undefined,
-      }
-
-      console.log('Saving split with data:', input); // Debug log
+        password,
+      };
 
       let saveId: string;
       
@@ -116,71 +112,12 @@ const QuickSplitPage = () => {
 
       // Generate share URL
       const shareUrl = `${window.location.origin}/split/${saveId}`;
-
-      // Set share link in UI
+      
+      // Set share link in UI (for the main page state)
       setShareLink(shareUrl);
-      setShowSaveDialog(false); 
-      setPassword(''); // Reset password after successful save
-
-      // First try native share on mobile devices
-      const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      if (isMobileDevice && typeof navigator.share === 'function') {
-        try {
-          await navigator.share({
-            title: 'SplitFair - Shared Bill Split',
-            text: `${vendorName ? `Check out the bill split for ${vendorName}` : 'Check out this bill split'} on SplitFair!`,
-            url: shareUrl
-          });
-          // Return early if share succeeds
-          return;
-        } catch (err) {
-          // If user cancels, don't try clipboard
-          if (err instanceof Error && err.name === 'AbortError') {
-            return;
-          }
-          console.log('Share failed, trying clipboard:', err);
-        }
-      }
-
-      // Then try the modern clipboard API
-      try {
-        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-          await navigator.clipboard.writeText(shareUrl);
-          setShowCopySuccess(true);
-          setTimeout(() => setShowCopySuccess(false), 2000);
-          return;
-        }
-      } catch (err) {
-        console.log('Clipboard API failed, trying fallback:', err);
-      }
-
-      // Finally try the legacy execCommand method
-      try {
-        const textarea = document.createElement('textarea');
-        textarea.value = shareUrl;
-        // Place in viewport but make it "invisible"
-        textarea.style.position = 'fixed';
-        textarea.style.opacity = '0';
-        textarea.style.pointerEvents = 'none';
-        textarea.style.zIndex = '-1';
-        document.body.appendChild(textarea);
-        textarea.focus();
-        textarea.select();
-
-        const success = document.execCommand('copy');
-        textarea.remove();
-
-        if (success) {
-          setShowCopySuccess(true);
-          setTimeout(() => setShowCopySuccess(false), 2000);
-        } else {
-          throw new Error('execCommand returned false');
-        }
-      } catch (err) {
-        console.error('All clipboard methods failed:', err);
-        alert('Unable to copy automatically. Please copy this link manually:\n\n' + shareUrl);
-      }
-
+      
+      // Return the URL for SaveAndShareDialog to handle copy/share
+      return shareUrl;
     } catch (error) {
       console.error('Failed to save split:', error);
       let errorMessage = 'Failed to save split. ';
@@ -192,7 +129,7 @@ const QuickSplitPage = () => {
           stack: error.stack
         });
       }
-      alert(errorMessage);
+      throw new Error(errorMessage);
     }
   }
 
@@ -684,89 +621,16 @@ const QuickSplitPage = () => {
                       <div className="bg-green-50 rounded-lg p-4">
                         <div className="flex items-center justify-center gap-2 text-green-800 mb-2">
                           <CheckCircleIcon className="h-5 w-5 text-green-500" />
-                          <span className="font-medium">Split saved successfully!</span>
+                          <span className="font-medium">Your split is ready to share!</span>
                         </div>
                         <button
-                          onClick={async () => {
-                            // First attempt: Web Share API for mobile devices
-                            const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-                            if (isMobileDevice && typeof navigator.share === 'function') {
-                              try {
-                                await navigator.share({
-                                  title: 'SplitFair - Shared Bill Split',
-                                  text: `${vendorName ? `Check out the bill split for ${vendorName}` : 'Check out this bill split'} on SplitFair!`,
-                                  url: shareLink
-                                });
-                                return;
-                              } catch (err) {
-                                if (err instanceof Error && err.name === 'AbortError') {
-                                  return; // User cancelled share, don't fallback
-                                }
-                                console.log('Share failed, trying clipboard:', err);
-                              }
-                            }
-
-                            // Second attempt: Modern navigator.clipboard API
-                            try {
-                              if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-                                await navigator.clipboard.writeText(shareLink);
-                                setShowCopySuccess(true);
-                                setTimeout(() => setShowCopySuccess(false), 2000);
-                                return;
-                              }
-                            } catch (err) {
-                              console.log('Clipboard API failed, trying fallback:', err);
-                            }
-
-                            // Final attempt: Legacy execCommand with textarea
-                            try {
-                              const textarea = document.createElement('textarea');
-                              textarea.value = shareLink;
-                              // Place in viewport but make it "invisible"
-                              textarea.style.position = 'fixed';
-                              textarea.style.opacity = '0';
-                              textarea.style.pointerEvents = 'none';
-                              textarea.style.zIndex = '-1';
-                              document.body.appendChild(textarea);
-                              textarea.focus();
-                              textarea.select();
-
-                              const success = document.execCommand('copy');
-                              textarea.remove();
-
-                              if (success) {
-                                setShowCopySuccess(true);
-                                setTimeout(() => setShowCopySuccess(false), 2000);
-                              } else {
-                                throw new Error('execCommand returned false');
-                              }
-                            } catch (err) {
-                              console.error('All clipboard methods failed:', err);
-                              alert('Unable to copy automatically. Please copy this link manually:\n\n' + shareLink);
-                            }
-                          }}
+                          onClick={() => setShowSaveDialog(true)}
                           className="w-full bg-white hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 border border-gray-200 rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2 relative"
-                          disabled={showCopySuccess}
                         >
-                          {showCopySuccess ? (
-                            <motion.div
-                              initial={{ opacity: 0, y: -10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0 }}
-                              className="flex items-center gap-2"
-                            >
-                              <CheckIcon className="h-5 w-5 text-green-500" />
-                              <span className="text-green-600 font-medium">Copied!</span>
-                            </motion.div>
-                          ) : (
-                            <>
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H9z" />
-                                <path d="M3 8a2 2 0 012-2v10h8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" />
-                              </svg>
-                              Copy Share Link
-                            </>
-                          )}
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
+                          </svg>
+                          Share Split
                         </button>
                       </div>
                       <div className="flex justify-center">
@@ -783,8 +647,6 @@ const QuickSplitPage = () => {
                             setVendorName('');
                             setShareLink(null);
                             setShowSaveDialog(false);
-                            setShowCopySuccess(false);
-                            setPassword('');
                           }}
                           className="inline-flex items-center gap-2 text-sm font-medium text-primary-600 hover:text-primary-700"
                         >
@@ -813,43 +675,6 @@ const QuickSplitPage = () => {
         </div>
       </div>
 
-      {/* Save & Share Modal */}
-      {showSaveDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Save Split</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Password (Optional)
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="input-field"
-                  placeholder="Leave blank for no password"
-                />
-              </div>
-              <div className="flex justify-end gap-2">
-                <button
-                  onClick={() => setShowSaveDialog(false)}
-                  className="btn-secondary"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleConfirmSave}
-                  className="btn-primary"
-                >
-                  Save Split
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Add Person Dialog */}
       <AddPersonDialog
         isOpen={showAddPersonDialog}
@@ -869,8 +694,16 @@ const QuickSplitPage = () => {
         editItem={editingItem}
         people={people}
       />
+
+      {/* Save and Share Dialog */}
+      <SaveAndShareDialog
+        isOpen={showSaveDialog}
+        onClose={() => setShowSaveDialog(false)}
+        onSave={handleConfirmSave}
+        vendorName={vendorName}
+      />
     </div>
-  )
+  );
 }
 
 export default QuickSplitPage;
