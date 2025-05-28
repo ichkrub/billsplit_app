@@ -41,7 +41,7 @@ const faqs = [
 	},
 	{
 		q: "What's coming next?",
-		a: 'Group features, history, and more!',
+		a: 'Group features, history, OCR, and more!',
 	},
 ]
 
@@ -136,14 +136,14 @@ const LandingPage = () => {
 						</div>
 					</motion.div>
 
-					<div className={`grid grid-cols-1 md:grid-cols-3 ${styleGuide.spacing.gap.xl} max-w-5xl mx-auto`}>
+					<div className={`grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto`}>
 						{benefits.map((b, i) => (
 							<div
 								key={i}
 								className={`${styleGuide.components.card.base} ${styleGuide.components.card.hover}`}
 							>
-								<div className="flex flex-col gap-4">
-									<div className="bg-secondary-100 p-3 rounded-full w-fit">
+								<div className="flex items-start gap-4">
+									<div className="bg-secondary-100 p-3 rounded-full shrink-0">
 										{b.icon}
 									</div>
 									<div>
