@@ -264,8 +264,12 @@ const LandingPage = () => {
 			</section>
 
 			{/* Testimonials Section */}
-			<section className={`${styleGuide.spacing.section.base} w-full bg-gray-50`}>
-				<div className={styleGuide.spacing.container}>
+			<section className="relative w-full py-32">
+				{/* Gradient background layers */}
+				<div className="absolute inset-0 bg-[linear-gradient(180deg,#E7F9D3_0%,#F8FAFC_100%)]" />
+				<div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,1)_0%,rgba(255,255,255,0.8)_5%,rgba(255,255,255,0)_25%,rgba(255,255,255,0)_75%,rgba(255,255,255,0.8)_95%,rgba(255,255,255,1)_100%)]" />
+				
+				<div className={`relative ${styleGuide.spacing.container}`}>
 					<motion.div 
 						className="max-w-2xl mx-auto text-center mb-16"
 						initial={{ opacity: 0, y: 20 }}
@@ -281,48 +285,45 @@ const LandingPage = () => {
 						</p>
 					</motion.div>
 
-					<div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+					<div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-5xl mx-auto px-4 md:px-0">
 						{[
 							{
 								quote: "Finally a bill splitter that's actually simple!",
 								author: "Ich",
 								location: "Bangkok",
-								gradient: "from-secondary-500/10 to-secondary-500/5"
 							},
 							{
 								quote: "Perfect for trips and shared groceries. No more calculator needed!",
 								author: "Nina",
 								location: "Singapore",
-								gradient: "from-primary-500/10 to-primary-500/5"
 							},
 							{
-								quote: "Love how I can share the split with just a link.",
-								author: "Earth",
+								quote: "Love how I can share the split with just a link. Makes splitting expenses so much easier!",
+								author: "Ella",
 								location: "Sydney",
-								gradient: "from-secondary-500/10 to-secondary-500/5"
 							}
 						].map((testimonial, i) => (
 							<motion.div
 								key={i}
-								className={`${styleGuide.components.card.base} bg-gradient-to-b ${testimonial.gradient}`}
 								initial={{ opacity: 0, y: 20 }}
 								whileInView={{ opacity: 1, y: 0 }}
 								viewport={{ once: true }}
-								transition={{ delay: i * 0.1, duration: 0.6 }}
+								transition={{ delay: i * 0.2, duration: 0.6 }}
+								className={`${styleGuide.components.card.base} bg-white/95 backdrop-blur transition-shadow duration-200 hover:shadow-lg h-full`}
 							>
-								<div className="flex flex-col gap-6">
-									<div className="flex-1">
-										<p className="text-lg text-gray-900 italic">"{testimonial.quote}"</p>
-									</div>
-									<div className="flex items-center gap-2">
-										<div className="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center">
+								<div className="flex flex-col h-full p-5">
+									<p className="text-lg font-medium text-[#003B5C] mb-6 text-left leading-relaxed flex-1">
+										"{testimonial.quote}"
+									</p>
+									<div className="flex items-center gap-3">
+										<div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center shrink-0">
 											<span className="text-sm font-medium text-primary-700">
 												{testimonial.author[0]}
 											</span>
 										</div>
-										<div>
-											<p className="font-medium text-gray-900">{testimonial.author}</p>
-											<p className="text-sm text-gray-500">{testimonial.location}</p>
+										<div className="min-w-0">
+											<p className="font-semibold text-gray-900">{testimonial.author}</p>
+											<p className="text-sm text-gray-600">{testimonial.location}</p>
 										</div>
 									</div>
 								</div>
