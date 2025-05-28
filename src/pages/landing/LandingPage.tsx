@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { LightBulbIcon, UserGroupIcon, LinkIcon, ChevronDownIcon, LockClosedIcon } from '@heroicons/react/24/outline'
+import { LightBulbIcon, UserGroupIcon, LinkIcon, ChevronDownIcon, LockClosedIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { styleGuide } from '../../styles/styleGuide'
 
 const benefits = [
@@ -19,6 +19,33 @@ const benefits = [
 		icon: <LinkIcon className="h-8 w-8 text-secondary-700 mx-auto" />, // 🔗
 		title: 'Shareable',
 		desc: 'Generate a link in one click — no app required.',
+	},
+]
+
+const comparisons = [
+	{
+		feature: 'No login required',
+		splitfair: true,
+		splitwise: false,
+		others: false,
+	},
+	{
+		feature: 'Per-item assignment',
+		splitfair: true,
+		splitwise: true,
+		others: false,
+	},
+	{
+		feature: 'Share via link',
+		splitfair: true,
+		splitwise: true,
+		others: false,
+	},
+	{
+		feature: 'Group features',
+		splitfair: 'coming-soon',
+		splitwise: true,
+		others: true,
 	},
 ]
 
@@ -156,6 +183,155 @@ const LandingPage = () => {
 					</div>
 				</div>
 			</section>
+			
+			{/* Comparison Section */}
+			<section className={`${styleGuide.spacing.section.base} w-full bg-white`}>
+				<div className={styleGuide.spacing.container}>
+					<motion.div 
+						className="max-w-2xl mx-auto text-center mb-16"
+						initial={{ opacity: 0, y: 20 }}
+						whileInView={{ opacity: 1, y: 0 }}
+						viewport={{ once: true }}
+						transition={{ duration: 0.6 }}
+					>
+						<div className="max-w-2xl mx-auto text-center mb-12">
+							<h2 className={styleGuide.typography.h2}>
+								Why choose SplitFair?
+							</h2>
+							<p className={styleGuide.typography.subtitle.section}>
+								See how we compare to other bill-splitting solutions
+							</p>
+						</div>
+					</motion.div>
+
+					<motion.div 
+						className="max-w-3xl mx-auto"
+						initial={{ opacity: 0, y: 20 }}
+						whileInView={{ opacity: 1, y: 0 }}
+						viewport={{ once: true }}
+						transition={{ delay: 0.2, duration: 0.6 }}
+					>
+						<div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+							<table className="w-full table-fixed">
+								<thead>
+									<tr className="border-b border-gray-200 bg-gray-50">
+										<th className="w-[40%] py-4 px-6 text-left text-sm font-semibold text-gray-900">Feature</th>
+										<th className="w-[20%] py-4 px-4 text-center text-sm font-semibold text-primary-600">SplitFair</th>
+										<th className="w-[20%] py-4 px-4 text-center text-sm font-semibold text-gray-900">Splitwise</th>
+										<th className="w-[20%] py-4 px-4 text-center text-sm font-semibold text-gray-900">Others</th>
+									</tr>
+								</thead>
+								<tbody className="divide-y divide-gray-200">
+									{comparisons.map((item, i) => (
+										<tr key={i} className="hover:bg-gray-50 transition-colors">
+											<td className="py-4 px-6 align-middle">
+												<span className="text-sm font-medium text-gray-900">{item.feature}</span>
+											</td>
+											<td className="py-4 px-4 text-center align-middle">
+												{item.splitfair === true && (
+													<CheckIcon className="h-5 w-5 text-primary-600 mx-auto" />
+												)}
+												{item.splitfair === false && (
+													<XMarkIcon className="h-5 w-5 text-gray-400 mx-auto" />
+												)}
+												{item.splitfair === 'coming-soon' && (
+													<span className="inline-flex items-center rounded-full bg-primary-50 px-2 py-1 text-xs font-medium text-primary-700 ring-1 ring-inset ring-primary-600/20">
+														Coming Soon
+													</span>
+												)}
+											</td>
+											<td className="py-4 px-4 text-center align-middle">
+												{item.splitwise ? (
+													<CheckIcon className="h-5 w-5 text-gray-600 mx-auto" />
+												) : (
+													<XMarkIcon className="h-5 w-5 text-gray-400 mx-auto" />
+												)}
+											</td>
+											<td className="py-4 px-4 text-center align-middle">
+												{item.others ? (
+													<CheckIcon className="h-5 w-5 text-gray-600 mx-auto" />
+												) : (
+													<XMarkIcon className="h-5 w-5 text-gray-400 mx-auto" />
+												)}
+											</td>
+										</tr>
+									))}
+								</tbody>
+							</table>
+						</div>
+					</motion.div>
+				</div>
+			</section>
+
+			{/* Testimonials Section */}
+			<section className={`${styleGuide.spacing.section.base} w-full bg-gray-50`}>
+				<div className={styleGuide.spacing.container}>
+					<motion.div 
+						className="max-w-2xl mx-auto text-center mb-16"
+						initial={{ opacity: 0, y: 20 }}
+						whileInView={{ opacity: 1, y: 0 }}
+						viewport={{ once: true }}
+						transition={{ duration: 0.6 }}
+					>
+						<h2 className={styleGuide.typography.h2}>
+							Loved by users worldwide
+						</h2>
+						<p className={styleGuide.typography.subtitle.section}>
+							Join thousands who split bills effortlessly with SplitFair
+						</p>
+					</motion.div>
+
+					<div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+						{[
+							{
+								quote: "Finally a bill splitter that's actually simple!",
+								author: "Ich",
+								location: "Bangkok",
+								gradient: "from-secondary-500/10 to-secondary-500/5"
+							},
+							{
+								quote: "Perfect for trips and shared groceries. No more calculator needed!",
+								author: "Nina",
+								location: "Singapore",
+								gradient: "from-primary-500/10 to-primary-500/5"
+							},
+							{
+								quote: "Love how I can share the split with just a link.",
+								author: "Earth",
+								location: "Sydney",
+								gradient: "from-secondary-500/10 to-secondary-500/5"
+							}
+						].map((testimonial, i) => (
+							<motion.div
+								key={i}
+								className={`${styleGuide.components.card.base} bg-gradient-to-b ${testimonial.gradient}`}
+								initial={{ opacity: 0, y: 20 }}
+								whileInView={{ opacity: 1, y: 0 }}
+								viewport={{ once: true }}
+								transition={{ delay: i * 0.1, duration: 0.6 }}
+							>
+								<div className="flex flex-col gap-6">
+									<div className="flex-1">
+										<p className="text-lg text-gray-900 italic">"{testimonial.quote}"</p>
+									</div>
+									<div className="flex items-center gap-2">
+										<div className="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center">
+											<span className="text-sm font-medium text-primary-700">
+												{testimonial.author[0]}
+											</span>
+										</div>
+										<div>
+											<p className="font-medium text-gray-900">{testimonial.author}</p>
+											<p className="text-sm text-gray-500">{testimonial.location}</p>
+										</div>
+									</div>
+								</div>
+							</motion.div>
+						))}
+					</div>
+				</div>
+			</section>
+
 			{/* FAQ Section */}
 			<section className={`${styleGuide.spacing.section.base} w-full bg-white`}>
 				<div className={styleGuide.spacing.container}>
