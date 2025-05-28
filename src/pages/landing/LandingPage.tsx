@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { LightBulbIcon, UserGroupIcon, LinkIcon, ChevronDownIcon, LockClosedIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { LightBulbIcon, UserGroupIcon, LinkIcon, LockClosedIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { styleGuide } from '../../styles/styleGuide'
 
 const benefits = [
@@ -336,32 +336,24 @@ const LandingPage = () => {
 			{/* FAQ Section */}
 			<section className={`${styleGuide.spacing.section.base} w-full bg-white`}>
 				<div className={styleGuide.spacing.container}>
-					<div className="grid grid-cols-1 md:grid-cols-3 gap-x-16 gap-y-10 max-w-5xl mx-auto">
-						<div className="md:col-span-1 mb-12 md:mb-0">
-							<h2 className={styleGuide.typography.h2}>Frequently asked questions</h2>
-							<div className="mt-4 space-y-4">
-								<p className="text-base text-gray-600">Stay updated with our latest features and updates.</p>
-								<form className="space-y-3">
-									<input
-										type="email"
-										placeholder="Enter your email"
-										className={`${styleGuide.components.input.base} ${styleGuide.components.input.sizes.md}`}
-									/>
-									<button
-										type="submit"
-										className={`w-full ${styleGuide.components.button.base} ${styleGuide.components.button.primary} ${styleGuide.components.button.sizes.md}`}
-									>
-										Get Updates
-									</button>
-								</form>
-							</div>
-						</div>
-						<div className="md:col-span-2">
-							<div className="flex flex-col divide-y divide-gray-100">
+					<motion.div 
+						className="max-w-2xl mx-auto text-center mb-16"
+						initial={{ opacity: 0, y: 20 }}
+						whileInView={{ opacity: 1, y: 0 }}
+						viewport={{ once: true }}
+						transition={{ duration: 0.6 }}
+					>
+						<h2 className={styleGuide.typography.h2}>
+							Frequently asked questions
+						</h2>
+					</motion.div>
+
+					<div className="max-w-3xl mx-auto">
+						<div className="flex flex-col divide-y divide-gray-100">
 							{faqs.map((faq, i) => {
 								const open = openFaqs.includes(i)
 								return (
-									<div key={i} className="py-6">
+									<div key={i} className="py-6 first:pt-0 last:pb-0">
 										<button
 											className="w-full flex items-center justify-between gap-6 text-left focus:outline-none group"
 											onClick={() => toggleFaq(i)}
@@ -370,14 +362,20 @@ const LandingPage = () => {
 											<span className="text-lg text-gray-900 font-medium group-hover:text-gray-600 transition-colors">
 												{faq.q}
 											</span>
-											<ChevronDownIcon
-												className={`h-5 w-5 flex-none text-gray-400 transition-transform duration-200 ${
-													open ? 'rotate-180' : ''
-												}`}
-											/>
+											<div className="flex-none">
+												{open ? (
+													<div className="h-6 w-6 text-gray-400 flex items-center justify-center">
+														<span className="text-2xl font-light">−</span>
+													</div>
+												) : (
+													<div className="h-6 w-6 text-gray-400 flex items-center justify-center">
+														<span className="text-2xl font-light">+</span>
+													</div>
+												)}
+											</div>
 										</button>
 										{open && (
-											<div className="mt-3 text-base leading-7 text-gray-600">
+											<div className="mt-4 text-base leading-7 text-gray-600">
 												{faq.a}
 											</div>
 										)}
@@ -385,25 +383,36 @@ const LandingPage = () => {
 								)
 							})}
 						</div>
-						</div>
 					</div>
 				</div>
 			</section>
+
 			{/* Secondary CTA Section - full width */}
 			<section className="w-full bg-primary-800 py-32">
-				<div className="max-w-screen-xl mx-auto text-center px-4">
-					<h3 className="text-4xl md:text-5xl font-bold text-white mb-6">
-						Ready to split your next bill?
-					</h3>
-					<p className="text-white/80 mb-10 text-xl max-w-2xl mx-auto">
-						Try SplitFair now and make group payments effortless.
-					</p>
-					<Link
-						to="/quicksplit"
-						className={`${styleGuide.components.button.base} ${styleGuide.components.button.alternate} ${styleGuide.components.button.sizes.lg} min-w-[240px]`}
-					>
-						Try SplitFair Now
-					</Link>
+				<div className="max-w-screen-xl mx-auto px-4">
+					<div className="max-w-3xl mx-auto text-center">
+						<h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+							Ready to split and stay updated?
+						</h2>
+						<p className="text-white/80 mb-10 text-xl">
+							Use SplitFair now — and get notified when we launch new features.
+						</p>
+						<div className="flex flex-col sm:flex-row gap-4 max-w-2xl mx-auto">
+							<div className="flex-1">
+								<input
+									type="email"
+									placeholder="Enter your email"
+									className={`w-full ${styleGuide.components.input.base} ${styleGuide.components.input.sizes.lg} border-white/20 bg-white/10 text-white placeholder:text-white/60 focus:bg-white/20`}
+								/>
+							</div>
+							<Link
+								to="/quicksplit"
+								className={`${styleGuide.components.button.base} ${styleGuide.components.button.alternate} ${styleGuide.components.button.sizes.lg} whitespace-nowrap px-8`}
+							>
+								Try SplitFair Now
+							</Link>
+						</div>
+					</div>
 				</div>
 			</section>
 		</div>
