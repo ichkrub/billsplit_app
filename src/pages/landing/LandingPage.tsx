@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { LightBulbIcon, UserGroupIcon, LinkIcon, LockClosedIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { styleGuide } from '../../styles/styleGuide'
+import CtaWithEmailCapture from '../../components/CtaWithEmailCapture'
 
 const benefits = [
 	{
@@ -390,29 +391,7 @@ const LandingPage = () => {
 			{/* Secondary CTA Section - full width */}
 			<section className="w-full bg-primary-800 py-32">
 				<div className="max-w-screen-xl mx-auto px-4">
-					<div className="max-w-3xl mx-auto text-center">
-						<h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-							Ready to split and stay updated?
-						</h2>
-						<p className="text-white/80 mb-10 text-xl">
-							Use SplitFair now — and get notified when we launch new features.
-						</p>
-						<div className="flex flex-col sm:flex-row gap-4 max-w-2xl mx-auto">
-							<div className="flex-1">
-								<input
-									type="email"
-									placeholder="Enter your email"
-									className={`w-full ${styleGuide.components.input.base} ${styleGuide.components.input.sizes.lg} border-white/20 bg-white/10 text-white placeholder:text-white/60 focus:bg-white/20`}
-								/>
-							</div>
-							<Link
-								to="/quicksplit"
-								className={`${styleGuide.components.button.base} ${styleGuide.components.button.alternate} ${styleGuide.components.button.sizes.lg} whitespace-nowrap px-8`}
-							>
-								Try SplitFair Now
-							</Link>
-						</div>
-					</div>
+					<CtaWithEmailCapture />
 				</div>
 			</section>
 		</div>
