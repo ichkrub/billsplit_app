@@ -23,9 +23,8 @@ export interface SplitInput {
   items: Item[];
   taxAmount: number;
   serviceAmount: number;
-  otherCharges?: number;
+  otherCharges: number;
   discount: number;
-  discountType: 'percent' | 'amount';
   currency: string;
   vendorName?: string;
   billDate?: string;
@@ -36,34 +35,6 @@ export interface SplitInput {
  */
 export const calculateSubtotal = (items: Item[]): number => {
   return items.reduce((sum, item) => sum + item.price, 0);
-};
-
-/**
- * Calculate discount amount based on type (percent or flat amount)
- */
-export const calculateDiscount = (
-  subtotal: number,
-  discount: number,
-  discountType: 'percent' | 'amount'
-): number => {
-  if (discountType === 'percent') {
-    return (subtotal * discount) / 100;
-  }
-  return discount;
-};
-
-/**
- * Calculate tax amount
- */
-export const calculateTax = (taxAmount: number): number => {
-  return taxAmount;
-};
-
-/**
- * Calculate service charge amount
- */
-export const calculateService = (serviceAmount: number): number => {
-  return serviceAmount;
 };
 
 /**
@@ -97,10 +68,12 @@ export const calculatePerPersonAmounts = (
   
   // Distribute tax, service, discount, and other charges proportionally
   const remainingAmount = total - calculateSubtotal(items);
-  Object.keys(personShares).forEach(personName => {
-    const share = personItemCounts[personName] / totalShares;
-    personShares[personName] += remainingAmount * share;
-  });
+  if (totalShares > 0) {
+    Object.keys(personShares).forEach(personName => {
+      const share = personItemCounts[personName] / totalShares;
+      personShares[personName] += remainingAmount * share;
+    });
+  }
   
   // Round to 2 decimal places
   Object.keys(personShares).forEach(personName => {
@@ -115,14 +88,10 @@ export const calculatePerPersonAmounts = (
  */
 export const calculateSplit = (input: SplitInput): SplitSummary => {
   const subtotal = calculateSubtotal(input.items);
-  const discount = calculateDiscount(
-    subtotal,
-    input.discount,
-    input.discountType
-  );
+  const discount = input.discount;
   const afterDiscount = subtotal - discount;
-  const tax = calculateTax(input.taxAmount);
-  const service = calculateService(input.serviceAmount);
+  const tax = input.taxAmount;
+  const service = input.serviceAmount;
   const otherCharges = input.otherCharges || 0;
   const total = afterDiscount + tax + service + otherCharges;
   
@@ -141,4 +110,4 @@ export const calculateSplit = (input: SplitInput): SplitSummary => {
     total,
     perPerson,
   };
-}; 
+};

@@ -6,17 +6,9 @@ import { saveAnonymousSplit, updateAnonymousSplit } from '../../utils/supabaseCl
 import { AddPersonDialog, AddItemDialog, SaveAndShareDialog } from '../../components/modals'
 
 // Helper functions for calculations
-const calculateDiscount = (subtotal: number, discount: number, discountType: 'percent' | 'amount'): number => {
-  if (discountType === 'percent') {
-    return (subtotal * discount) / 100;
-  }
-  return discount;
-}
-
-const calculateTotal = (items: Item[], taxAmount: number, serviceAmount: number, otherCharges: number, discount: number, discountType: 'percent' | 'amount'): number => {
+const calculateTotal = (items: Item[], taxAmount: number, serviceAmount: number, otherCharges: number, discount: number): number => {
   const subtotal = items.reduce((sum, item) => sum + (isNaN(item.price) ? 0 : item.price), 0);
-  const discountAmount = calculateDiscount(subtotal, discount, discountType);
-  return subtotal + taxAmount + serviceAmount + otherCharges - discountAmount;
+  return subtotal + taxAmount + serviceAmount + otherCharges - discount;
 }
 
 const QuickSplitPage = () => {
@@ -26,7 +18,6 @@ const QuickSplitPage = () => {
   const [serviceAmount, setServiceAmount] = useState(0)
   const [otherCharges, setOtherCharges] = useState(0)
   const [discount, setDiscount] = useState(0)
-  const [discountType, setDiscountType] = useState<'percent' | 'amount'>('amount')
   const [currency, setCurrency] = useState('USD')
   const [vendorName, setVendorName] = useState('')
   const [billDate, setBillDate] = useState(new Date().toISOString().split('T')[0])
@@ -91,7 +82,6 @@ const QuickSplitPage = () => {
         serviceAmount,
         otherCharges: otherCharges || 0,
         discount,
-        discountType,
         currency,
         vendorName,
         billDate: formattedDate,
@@ -391,25 +381,15 @@ const QuickSplitPage = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Discount
                     </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="number"
-                        value={discount || ''}
-                        onChange={(e) => setDiscount(Number(e.target.value))}
-                        className="input-field"
-                        min="0"
-                        step="0.01"
-                        placeholder="0.00"
-                      />
-                      <select
-                        value={discountType}
-                        onChange={(e) => setDiscountType(e.target.value as 'percent' | 'amount')}
-                        className="input-field w-24"
-                      >
-                        <option value="percent">%</option>
-                        <option value="amount">{currency}</option>
-                      </select>
-                    </div>
+                    <input
+                      type="number"
+                      value={discount || ''}
+                      onChange={(e) => setDiscount(Number(e.target.value))}
+                      className="input-field"
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                    />
                   </div>
                 </div>
               </div>
@@ -470,17 +450,13 @@ const QuickSplitPage = () => {
                       )}
                       {discount > 0 && (
                         <div className="flex justify-between py-1 text-green-600">
-                          <span>Discount {discountType === 'percent' ? `(${discount}%)` : ''}</span>
-                          <span>- {currency} {calculateDiscount(
-                            items.reduce((sum, item) => sum + (isNaN(item.price) ? 0 : item.price), 0),
-                            discount,
-                            discountType
-                          ).toFixed(2)}</span>
+                          <span>Discount</span>
+                          <span>- {currency} {discount.toFixed(2)}</span>
                         </div>
                       )}
                       <div className="flex justify-between pt-2 border-t font-medium text-base">
                         <span>Total</span>
-                        <span>{currency} {calculateTotal(items, taxAmount, serviceAmount, otherCharges, discount, discountType).toFixed(2)}</span>
+                        <span>{currency} {calculateTotal(items, taxAmount, serviceAmount, otherCharges, discount).toFixed(2)}</span>
                       </div>
                     </div>
                   </div>
@@ -513,7 +489,7 @@ const QuickSplitPage = () => {
                           const taxShare = taxAmount * proportion;
                           const serviceShare = serviceAmount * proportion;
                           const otherShare = otherCharges * proportion;
-                          const discountShare = calculateDiscount(subtotal, discount, discountType) * proportion;
+                          const discountShare = discount * proportion;
                           const personTotal = itemTotal + taxShare + serviceShare + otherShare - discountShare;
 
                           return (
@@ -643,7 +619,6 @@ const QuickSplitPage = () => {
                             setServiceAmount(0);
                             setOtherCharges(0);
                             setDiscount(0);
-                            setDiscountType('amount');
                             setCurrency('USD');
                             setVendorName('');
                             setShareLink(null);
