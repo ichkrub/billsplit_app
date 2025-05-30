@@ -70,7 +70,7 @@ export default function CtaWithEmailCapture() {
         Ready to split and stay updated?
       </h2>
       <p className="text-white/80 mb-10 text-xl">
-        Use SplitFair now — and get notified when we launch new features.
+        Use BillSplit now — and get notified when we launch new features.
       </p>
       
       <form onSubmit={handleSubmit} className="max-w-xl mx-auto">
@@ -127,7 +127,7 @@ export default function CtaWithEmailCapture() {
             to="/quicksplit"
             className={`w-full ${styleGuide.components.button.base} ${styleGuide.components.button.sizes.lg} bg-secondary-500 text-primary-900 hover:bg-secondary-400 shadow-[0_2px_6px_rgba(0,0,0,0.05)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:-translate-y-[1px] active:translate-y-[1px]`}
           >
-            Try SplitFair Now
+            Try BillSplit Now
           </Link>
         </div>
       </form>

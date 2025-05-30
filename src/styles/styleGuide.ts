@@ -1,4 +1,4 @@
-// SplitFair Style Guide
+// BillSplit Style Guide
 export const styleGuide = {
   fontFamily: {
     sans: '"General Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',

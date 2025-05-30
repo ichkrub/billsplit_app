@@ -39,8 +39,8 @@ export const SaveAndShareDialog = ({ isOpen, onClose, onSave, vendorName }: Save
     if (isMobileDevice && typeof navigator.share === 'function') {
       try {
         await navigator.share({
-          title: 'SplitFair - Shared Bill Split',
-          text: `${vendorName ? `Check out the bill split for ${vendorName}` : 'Check out this bill split'} on SplitFair!`,
+          title: 'BillSplit - Shared Bill Split',
+          text: `${vendorName ? `Check out the bill split for ${vendorName}` : 'Check out this bill split'} on BillSplit!`,
           url: shareLink
         });
         return;

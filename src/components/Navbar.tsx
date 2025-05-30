@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import logo from '../assets/splitfair-logo.png';
+import logo from '../assets/billsplit-logo.png';
 
 const Navbar = () => {
   const location = useLocation();
@@ -9,8 +9,8 @@ const Navbar = () => {
     <nav className="bg-white shadow-sm sticky top-0 z-50 border-b border-slate-200">
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
-          <img src={logo} alt="SplitFair Logo" className="h-8 w-8 rounded shadow-sm" />
-          <span className="text-xl font-extrabold text-gray-900">SplitFair</span>
+          <img src={logo} alt="BillSplit Logo" className="h-8 w-8 rounded shadow-sm" />
+          <span className="text-xl font-extrabold text-gray-900">BillSplit</span>
         </Link>
         <div className="flex items-center gap-6">
           <Link 

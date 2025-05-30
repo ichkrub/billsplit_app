@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://splitfair.co/sitemap.xml
+Sitemap: https://billsplit.me/sitemap.xml

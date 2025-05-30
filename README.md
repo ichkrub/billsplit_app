@@ -1,4 +1,4 @@
-# SplitFair
+# BillSplit
 
 Split bills fairly, fast, and free. No account needed.
 

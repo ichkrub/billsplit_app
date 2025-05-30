@@ -2,7 +2,7 @@ import sharp from 'sharp';
 import fs from 'fs';
 import path from 'path';
 
-const inputPath = './src/assets/splitfair-logo.png';
+const inputPath = './src/assets/billsplit-logo.png';
 const outputDir = './public';
 
 async function generateFavicons() {

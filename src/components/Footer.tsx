@@ -6,7 +6,7 @@ const Footer = () => (
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
         <div className="flex flex-col items-center md:items-start gap-2">
           <Link to="/" className="text-xl font-extrabold text-gray-900">
-            SplitFair
+            BillSplit
           </Link>
           <p className="text-sm text-gray-500">
             Split bills with friends — instantly and fairly.
@@ -22,7 +22,7 @@ const Footer = () => (
             </Link>
           </div>
           <p className="text-sm text-gray-400">
-            © {new Date().getFullYear()} SplitFair. All rights reserved.
+            © {new Date().getFullYear()} BillSplit. All rights reserved.
           </p>
         </div>
       </div>

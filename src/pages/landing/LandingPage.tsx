@@ -26,25 +26,25 @@ const benefits = [
 const comparisons = [
 	{
 		feature: 'No login required',
-		splitfair: true,
+		billsplit: true,
 		splitwise: false,
 		others: false,
 	},
 	{
 		feature: 'Per-item assignment',
-		splitfair: true,
+		billsplit: true,
 		splitwise: true,
 		others: false,
 	},
 	{
 		feature: 'Share via link',
-		splitfair: true,
+		billsplit: true,
 		splitwise: true,
 		others: false,
 	},
 	{
 		feature: 'Group features',
-		splitfair: 'coming-soon',
+		billsplit: 'coming-soon',
 		splitwise: true,
 		others: true,
 	},
@@ -52,8 +52,8 @@ const comparisons = [
 
 const faqs = [
 	{
-		q: 'How does SplitFair work?',
-		a: 'Enter names, add items, assign who pays for what, and SplitFair does the math.',
+		q: 'How does BillSplit work?',
+		a: 'Enter names, add items, assign who pays for what, and BillSplit does the math.',
 	},
 	{
 		q: 'Do I need to create an account?',
@@ -102,7 +102,7 @@ const LandingPage = () => {
 								Split bills instantly — no login, no math, no stress.
 							</h1>
 							<p className={`${styleGuide.typography.subtitle.hero} mb-10 mx-auto`}>
-								Add people, assign items, and SplitFair handles the rest. Share a smart bill link in seconds — all for free.
+								Add people, assign items, and BillSplit handles the rest. Share a smart bill link in seconds — all for free.
 							</p>
 							<div className="flex flex-col sm:flex-row justify-center gap-6">
 								<Link
@@ -197,7 +197,7 @@ const LandingPage = () => {
 					>
 						<div className="max-w-2xl mx-auto text-center mb-12">
 							<h2 className={styleGuide.typography.h2}>
-								Why choose SplitFair?
+								Why choose BillSplit?
 							</h2>
 							<p className={styleGuide.typography.subtitle.section}>
 								See how we compare to other bill-splitting solutions
@@ -217,7 +217,7 @@ const LandingPage = () => {
 								<thead>
 									<tr className="border-b border-gray-200 bg-gray-50">
 										<th className="w-[40%] py-4 px-6 text-left text-sm font-semibold text-gray-900">Feature</th>
-										<th className="w-[20%] py-4 px-4 text-center text-sm font-semibold text-primary-600">SplitFair</th>
+										<th className="w-[20%] py-4 px-4 text-center text-sm font-semibold text-primary-600">BillSplit</th>
 										<th className="w-[20%] py-4 px-4 text-center text-sm font-semibold text-gray-900">Splitwise</th>
 										<th className="w-[20%] py-4 px-4 text-center text-sm font-semibold text-gray-900">Others</th>
 									</tr>
@@ -229,13 +229,13 @@ const LandingPage = () => {
 												<span className="text-sm font-medium text-gray-900">{item.feature}</span>
 											</td>
 											<td className="py-4 px-4 text-center align-middle">
-												{item.splitfair === true && (
+												{item.billsplit === true && (
 													<CheckIcon className="h-5 w-5 text-primary-600 mx-auto" />
 												)}
-												{item.splitfair === false && (
+												{item.billsplit === false && (
 													<XMarkIcon className="h-5 w-5 text-gray-400 mx-auto" />
 												)}
-												{item.splitfair === 'coming-soon' && (
+												{item.billsplit === 'coming-soon' && (
 													<span className="inline-flex items-center rounded-full bg-primary-50 px-2 py-1 text-xs font-medium text-primary-700 ring-1 ring-inset ring-primary-600/20">
 														Coming Soon
 													</span>
@@ -282,7 +282,7 @@ const LandingPage = () => {
 							Loved by users worldwide
 						</h2>
 						<p className={styleGuide.typography.subtitle.section}>
-							Join thousands who split bills effortlessly with SplitFair
+							Join thousands who split bills effortlessly with BillSplit
 						</p>
 					</motion.div>
 
