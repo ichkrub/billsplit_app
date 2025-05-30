@@ -14,12 +14,24 @@ import { getAnonymousSplit, supabase } from '../utils/supabaseClient';
 import type { AnonymousSplit } from '../utils/supabaseClient';
 import { calculateSplit } from '../utils/splitLogic';
 
+interface SplitSummary {
+  subtotal: number;
+  total: number;
+  perPerson: Record<string, number>;
+}
+
+interface EditableItem {
+  name: string;
+  price: number;
+  assigned: string[];
+}
+
 const FIVE_DAYS_MS = 5 * 24 * 60 * 60 * 1000;
 
 const SharedSplitPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [split, setSplit] = useState<AnonymousSplit | null>(null);
-  const [summary, setSummary] = useState<any>(null);
+  const [summary, setSummary] = useState<SplitSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expired, setExpired] = useState(false);
@@ -27,7 +39,7 @@ const SharedSplitPage: React.FC = () => {
   const [passwordInput, setPasswordInput] = useState('');
   const [editAllowed, setEditAllowed] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const [editAssignments, setEditAssignments] = useState<any[]>([]);
+  const [editAssignments, setEditAssignments] = useState<EditableItem[]>([]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -55,7 +67,7 @@ const SharedSplitPage: React.FC = () => {
           taxAmount: Number(data.tax_amount),
           serviceAmount: Number(data.service_amount),
           discount: Number(data.discount),
-          discountType: data.discount_type,
+          // discountType removed as we only use amount now
           currency: data.currency,
           otherCharges: 0, // Not yet in DB, fallback to 0
           vendorName: data.vendor_name || '',
@@ -119,8 +131,7 @@ const SharedSplitPage: React.FC = () => {
       items: editAssignments,
       taxAmount: Number(split.tax_amount),
       serviceAmount: Number(split.service_amount),
-      discount: Number(split.discount),
-      discountType: split.discount_type,
+      discount: Number(split.discount),          // discountType removed as we only use amount now
       currency: split.currency,
       otherCharges: 0,
       vendorName: split.vendor_name || '',
@@ -213,14 +224,14 @@ const SharedSplitPage: React.FC = () => {
             onCancel={() => setEditMode(false)}
             saving={saving}
           />
-        ) : (
+        ) : split && summary ? (
           <ViewModeContent
-            split={split!}
+            split={split}
             summary={summary}
             editAllowed={editAllowed}
             onEditClick={startEdit}
           />
-        )}
+        ) : null}
       </div>
     </div>
   );
@@ -229,7 +240,7 @@ const SharedSplitPage: React.FC = () => {
 // Separate components for better organization
 const ViewModeContent: React.FC<{
   split: AnonymousSplit;
-  summary: any;
+  summary: SplitSummary;
   editAllowed: boolean;
   onEditClick: () => void;
 }> = ({ split, summary, editAllowed, onEditClick }) => {
@@ -280,10 +291,9 @@ const ViewModeContent: React.FC<{
                   <span className="text-gray-600">Service</span>
                   <span>{split.currency} {split.service_amount.toFixed(2)}</span>
                 </div>
-              )}
-              {split.discount > 0 && (
+              )}                {split.discount > 0 && (
                 <div className="flex justify-between text-sm text-green-600">
-                  <span>Discount {split.discount_type === 'percent' ? `(${split.discount}%)` : ''}</span>
+                  <span>Discount</span>
                   <span>- {split.currency} {split.discount.toFixed(2)}</span>
                 </div>
               )}
@@ -384,7 +394,7 @@ const ViewModeContent: React.FC<{
 
 const EditModeView: React.FC<{
   split: AnonymousSplit;
-  editAssignments: any[];
+  editAssignments: EditableItem[];
   toggleAssignment: (itemIdx: number, personName: string) => void;
   onSave: () => void;
   onCancel: () => void;

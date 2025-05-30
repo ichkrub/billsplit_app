@@ -44,7 +44,6 @@ export interface AnonymousSplit {
   tax_amount: number
   service_amount: number
   discount: number
-  discount_type: 'percent' | 'amount'
   currency: string
   password?: string
   vendor_name?: string
@@ -67,7 +66,6 @@ const generateShortId = (): string => {
 };
 
 export const saveAnonymousSplit = async (split: SplitInput & { password?: string }): Promise<string> => {
-  // Generate a short ID
   const shortId = generateShortId();
   
   const { data, error } = await supabase
@@ -80,10 +78,10 @@ export const saveAnonymousSplit = async (split: SplitInput & { password?: string
         tax_amount: split.taxAmount,
         service_amount: split.serviceAmount,
         discount: split.discount,
-        discount_type: split.discountType,
         currency: split.currency,
         vendor_name: split.vendorName || null,
-        bill_date: split.billDate ? split.billDate : null,
+        bill_date: split.billDate || null,
+        password: split.password || null,
       },
     ])
     .select('short_id')
@@ -113,7 +111,6 @@ export const updateAnonymousSplit = async (id: string, split: SplitInput & { pas
       tax_amount: split.taxAmount,
       service_amount: split.serviceAmount,
       discount: split.discount,
-      discount_type: split.discountType,
       currency: split.currency,
       vendor_name: split.vendorName || null,
       bill_date: split.billDate || null,
@@ -133,7 +130,6 @@ export const updateAnonymousSplit = async (id: string, split: SplitInput & { pas
       tax_amount: split.taxAmount,
       service_amount: split.serviceAmount,
       discount: split.discount,
-      discount_type: split.discountType,
       currency: split.currency,
       vendor_name: split.vendorName || null,
       bill_date: split.billDate || null,

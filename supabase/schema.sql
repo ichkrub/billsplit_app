@@ -7,7 +7,6 @@ CREATE TABLE anonymous_splits (
   tax_amount FLOAT NOT NULL DEFAULT 0,
   service_amount FLOAT NOT NULL DEFAULT 0,
   discount FLOAT NOT NULL DEFAULT 0,
-  discount_type TEXT NOT NULL CHECK (discount_type IN ('percent', 'amount')),
   currency TEXT NOT NULL,
   vendor_name TEXT,
   bill_date DATE,
