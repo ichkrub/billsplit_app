@@ -72,7 +72,8 @@ export default function CtaWithEmailCapture() {
       <p className="text-white/80 mb-10 text-xl">
         Use SplitFair now — and get notified when we launch new features.
       </p>
-      <form onSubmit={handleSubmit} className="max-w-2xl mx-auto">
+      
+      <form onSubmit={handleSubmit} className="max-w-xl mx-auto">
         {/* Honeypot field - hidden from users but visible to bots */}
         <div className="opacity-0 absolute -left-[9999px] -top-[9999px] h-0">
           <label htmlFor="fullname">Do not fill this field</label>
@@ -87,46 +88,47 @@ export default function CtaWithEmailCapture() {
           />
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
-            <input
-              type="email"
-              placeholder="Enter your email"
-              value={formState.email}
-              onChange={e => setFormState(prev => ({ 
-                ...prev, 
-                email: e.target.value,
-                status: 'idle',
-                message: ''
-              }))}
-              disabled={formState.status === 'submitting'}
-              aria-label="Email address"
-              className={`w-full ${styleGuide.components.input.base} ${styleGuide.components.input.sizes.lg} border-white/20 bg-white/10 text-white placeholder:text-white/60 focus:bg-white/20`}
-            />
-            {formState.message && (
-              <div className={`text-sm text-left mt-2 ${
-                formState.status === 'success' ? 'text-green-200' : 'text-red-200'
-              }`}>
-                {formState.message}
-              </div>
-            )}
-          </div>
-          
-          <div className="flex gap-4">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <input
+                type="email"
+                placeholder="Enter your email (optional)"
+                value={formState.email}
+                onChange={e => setFormState(prev => ({ 
+                  ...prev, 
+                  email: e.target.value,
+                  status: e.target.value ? 'idle' : prev.status,
+                  message: e.target.value ? '' : prev.message
+                }))}
+                disabled={formState.status === 'submitting'}
+                aria-label="Email address"
+                className={`w-full ${styleGuide.components.input.base} ${styleGuide.components.input.sizes.lg} border-white/20 bg-white/20 text-white placeholder:text-white/60 focus:outline-none focus:bg-white/30 transition-colors`}
+              />
+              {formState.message && (
+                <div className={`absolute left-0 -bottom-6 text-sm ${
+                  formState.status === 'success' ? 'text-green-200' : 'text-red-200'
+                }`}>
+                  {formState.message}
+                </div>
+              )}
+            </div>
+
             <button
               type="submit"
               disabled={formState.status === 'submitting'}
-              className={`${styleGuide.components.button.base} ${styleGuide.components.button.alternate} ${styleGuide.components.button.sizes.lg} whitespace-nowrap px-8`}
+              className={`${styleGuide.components.button.base} ${styleGuide.components.button.sizes.lg} !bg-white !text-primary-800 hover:!bg-white/90 whitespace-nowrap`}
             >
               {formState.status === 'submitting' ? 'Subscribing...' : 'Subscribe'}
             </button>
-            <Link
-              to="/quicksplit"
-              className={`${styleGuide.components.button.base} ${styleGuide.components.button.alternate} ${styleGuide.components.button.sizes.lg} whitespace-nowrap px-8`}
-            >
-              Try SplitFair Now
-            </Link>
           </div>
+
+          <Link
+            to="/quicksplit"
+            className={`w-full ${styleGuide.components.button.base} ${styleGuide.components.button.sizes.lg} bg-secondary-500 text-primary-900 hover:bg-secondary-400 shadow-[0_2px_6px_rgba(0,0,0,0.05)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:-translate-y-[1px] active:translate-y-[1px]`}
+          >
+            Try SplitFair Now
+          </Link>
         </div>
       </form>
     </div>
