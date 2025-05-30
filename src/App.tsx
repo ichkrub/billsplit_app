@@ -3,6 +3,7 @@ import Layout from './components/Layout'
 import LandingPage from './pages/landing/LandingPage'
 import QuickSplitPage from './pages/quicksplit/QuickSplitPage'
 import SharedSplitPage from './pages/SharedSplitPage'
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
 
 const App = () => (
   <Router>
@@ -11,9 +12,10 @@ const App = () => (
         <Route path="/" element={<LandingPage />} />
         <Route path="/quicksplit" element={<QuickSplitPage />} />
         <Route path="/split/:id" element={<SharedSplitPage />} />
+        <Route path="/privacy" element={<PrivacyPolicyPage />} />
       </Routes>
     </Layout>
   </Router>
 )
 
-export default App 
+export default App

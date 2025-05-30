@@ -20,6 +20,9 @@ const Footer = () => (
             <Link to="/quicksplit" className="text-sm text-gray-600 hover:text-primary-600 transition-colors">
               Quick Split
             </Link>
+            <Link to="/privacy" className="text-sm text-gray-600 hover:text-primary-600 transition-colors">
+              Privacy Policy
+            </Link>
           </div>
           <p className="text-sm text-gray-400">
             © {new Date().getFullYear()} BillSplit. All rights reserved.
