@@ -1,0 +1,29 @@
+# Settings for Netlify deployment and functions
+[build]
+  command = "npm run build"
+  functions = "netlify/functions"
+  publish = "dist"
+
+[functions]
+  # Increase timeout for OCR processing
+  node_bundler = "esbuild"
+  external_node_modules = ["@google-cloud/vision"]
+  included_files = ["netlify/functions/*.cjs"]
+
+[[headers]]
+  # Define which paths this specific [[headers]] block will cover.
+  for = "/.netlify/functions/*"
+    [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Headers = "Content-Type"
+    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[dev]
+  command = "npm run dev"
+  framework = "#custom"
+  targetPort = 5173

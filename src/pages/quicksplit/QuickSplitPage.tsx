@@ -4,6 +4,14 @@ import { CheckCircleIcon } from '@heroicons/react/24/solid'
 import type { Person, Item, SplitInput } from '../../utils/splitLogic'
 import { saveAnonymousSplit, updateAnonymousSplit } from '../../utils/supabaseClient'
 import { AddPersonDialog, AddItemDialog, SaveAndShareDialog } from '../../components/modals'
+import ReceiptUploader from '../../components/ReceiptUploader'
+import { ParsedReceipt } from '../../types/receipt'
+
+// Helper function to validate date format
+const isValidDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date instanceof Date && !isNaN(date.getTime());
+};
 
 // Helper functions for calculations
 const calculateTotal = (items: Item[], taxAmount: number, serviceAmount: number, otherCharges: number, discount: number): number => {
@@ -18,17 +26,15 @@ const QuickSplitPage = () => {
   const [serviceAmount, setServiceAmount] = useState(0)
   const [otherCharges, setOtherCharges] = useState(0)
   const [discount, setDiscount] = useState(0)
-  const [currency, setCurrency] = useState('USD')
-  const [vendorName, setVendorName] = useState('')
-  const [billDate, setBillDate] = useState(new Date().toISOString().split('T')[0])
+  const [currency, setCurrency] = useState<string>('SGD')
+  const [vendorName, setVendorName] = useState<string>('Unknown')
+  const [billDate, setBillDate] = useState<string>(new Date().toISOString().split('T')[0])
   const [shareLink, setShareLink] = useState<string | null>(null)
   const [showSaveDialog, setShowSaveDialog] = useState(false)
   const [showAddPersonDialog, setShowAddPersonDialog] = useState(false)
   const [showAddItemDialog, setShowAddItemDialog] = useState(false)
   const [editingItem, setEditingItem] = useState<{ index: number; item: Item } | null>(null)
   const [splitId, setSplitId] = useState<string | null>(null)
-
-
 
   const addPerson = () => setShowAddPersonDialog(true);
 
@@ -123,6 +129,42 @@ const QuickSplitPage = () => {
     }
   }
 
+  const handleParsedReceipt = (data: ParsedReceipt) => {
+    // Ensure we have valid data
+    if (!data) {
+      console.error('No receipt data received');
+      return;
+    }
+
+    // Update vendor name
+    setVendorName(data.vendor_name || 'Unknown');
+    
+    // Update date if valid
+    if (data.date && isValidDate(data.date)) {
+      setBillDate(data.date);
+    }
+    
+    // Update currency
+    if (data.currency) {
+      setCurrency(data.currency);
+    }
+    
+    // Add items (prices already include item-specific discounts)
+    if (data.items.length > 0) {
+      setItems(data.items.map(item => ({
+        name: item.name, // Will include discount info if applicable
+        price: item.price, // Already has item-specific discount applied
+        assigned: [] // Start with no assignments
+      })));
+    }
+    
+    // Update charges
+    setTaxAmount(data.tax || 0);
+    setServiceAmount(data.service_charge || 0);
+    setOtherCharges(data.other_charge || 0);
+    setDiscount(data.general_discount || 0);
+  };
+
   return (
     <div className="bg-slate-50 w-full">
       {/* Header Section */}
@@ -187,16 +229,31 @@ const QuickSplitPage = () => {
             <div className="bg-white rounded-xl shadow-sm p-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold text-gray-900">Items</h2>
-                <button
-                  onClick={addItem}
-                  className="btn-primary text-sm px-4 py-2 flex items-center gap-2"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-                  </svg>
-                  Add Item
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={addItem}
+                    className="btn-primary text-sm px-4 py-2 flex items-center gap-2"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                    </svg>
+                    Add Item
+                  </button>
+                </div>
               </div>
+
+              {/* Receipt Upload Section */}
+              {items.length === 0 && (
+                <div className="mb-6 border-b pb-6">
+                  <h3 className="text-sm font-medium text-gray-700 mb-2">
+                    Scan Receipt (Beta)
+                  </h3>
+                  <ReceiptUploader
+                    onOcrComplete={handleParsedReceipt}
+                  />
+                </div>
+              )}
+
               {items.length === 0 ? (
                 <p className="text-gray-500 text-center py-4">No items added yet</p>
               ) : (
