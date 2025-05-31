@@ -364,20 +364,40 @@ const ViewModeContent: React.FC<{
                         
                         {/* Charges Breakdown */}
                         <div className="space-y-2 pt-3 border-t text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Share of Tax</span>
-                            <span>{split.currency} {((split.tax_amount * personTotal) / summary.total).toFixed(2)}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Share of Service</span>
-                            <span>{split.currency} {((split.service_amount * personTotal) / summary.total).toFixed(2)}</span>
-                          </div>
-                          {split.discount > 0 && (
-                            <div className="flex justify-between text-green-600">
-                              <span>Share of Discount</span>
-                              <span>- {split.currency} {((split.discount * personTotal) / summary.total).toFixed(2)}</span>
-                            </div>
-                          )}
+                          {/* Calculate shares using itemTotal/subtotal proportion */}
+                          {(() => {
+                            const itemTotal = personItems.reduce((sum, item) => 
+                              sum + (item.price / item.assigned.length), 0
+                            );
+                            const subtotal = summary.subtotal;
+                            const proportion = subtotal === 0 ? 0 : itemTotal / subtotal;
+                            const taxShare = split.tax_amount * proportion;
+                            const serviceShare = split.service_amount * proportion;
+                            const discountShare = split.discount * proportion;
+                            
+                            return (
+                              <>
+                                {split.tax_amount > 0 && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Share of Tax</span>
+                                    <span>{split.currency} {taxShare.toFixed(2)}</span>
+                                  </div>
+                                )}
+                                {split.service_amount > 0 && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Share of Service</span>
+                                    <span>{split.currency} {serviceShare.toFixed(2)}</span>
+                                  </div>
+                                )}
+                                {split.discount > 0 && (
+                                  <div className="flex justify-between text-green-600">
+                                    <span>Share of Discount</span>
+                                    <span>- {split.currency} {discountShare.toFixed(2)}</span>
+                                  </div>
+                                )}
+                              </>
+                            );
+                          })()}
                         </div>
                       </div>
                     )}

@@ -48,10 +48,10 @@ export const calculatePerPersonAmounts = (
   const personShares: Record<string, number> = {};
   const personItemCounts: Record<string, number> = {};
   
-  // Initialize person shares
+  // Initialize person shares and subtotal calculation
   people.forEach(person => {
     personShares[person.name] = 0;
-    personItemCounts[person.name] = 0;
+    personItemCounts[person.name] = 0; // Keep this for debugging
   });
   
   // Calculate shares based on item assignments
@@ -59,19 +59,19 @@ export const calculatePerPersonAmounts = (
     const sharePerPerson = item.price / item.assigned.length;
     item.assigned.forEach(personName => {
       personShares[personName] += sharePerPerson;
-      personItemCounts[personName]++;
+      personItemCounts[personName]++; // Keep this for debugging
     });
   });
   
-  // Calculate total shares
-  const totalShares = Object.values(personItemCounts).reduce((sum, count) => sum + count, 0);
+  // Calculate total subtotal to find proportions
+  const subtotal = calculateSubtotal(items);
   
   // Distribute tax, service, discount, and other charges proportionally
-  const remainingAmount = total - calculateSubtotal(items);
-  if (totalShares > 0) {
+  const remainingAmount = total - subtotal;
+  if (subtotal > 0) {
     Object.keys(personShares).forEach(personName => {
-      const share = personItemCounts[personName] / totalShares;
-      personShares[personName] += remainingAmount * share;
+      const proportion = personShares[personName] / subtotal;
+      personShares[personName] += remainingAmount * proportion;
     });
   }
   
