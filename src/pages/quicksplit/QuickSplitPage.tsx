@@ -27,7 +27,7 @@ const QuickSplitPage = () => {
   const [otherCharges, setOtherCharges] = useState(0)
   const [discount, setDiscount] = useState(0)
   const [currency, setCurrency] = useState<string>('SGD')
-  const [vendorName, setVendorName] = useState<string>('Unknown')
+  const [vendorName, setVendorName] = useState<string>('')
   const [billDate, setBillDate] = useState<string>(new Date().toISOString().split('T')[0])
   const [shareLink, setShareLink] = useState<string | null>(null)
   const [showSaveDialog, setShowSaveDialog] = useState(false)
@@ -136,8 +136,10 @@ const QuickSplitPage = () => {
       return;
     }
 
-    // Update vendor name
-    setVendorName(data.vendor_name || 'Unknown');
+    // Update vendor name only if we get one from OCR
+    if (data.vendor_name) {
+      setVendorName(data.vendor_name);
+    }
     
     // Update date if valid
     if (data.date && isValidDate(data.date)) {

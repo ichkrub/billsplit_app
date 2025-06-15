@@ -286,9 +286,9 @@ exports.handler = async (event, context) => {
     console.log('About to call GPT with text:', cleanedText);
 
     // Call GPT to parse the receipt
-    console.log('Using OpenAI model: gpt-4o');
+    console.log('Using OpenAI model: gpt-4o-mini');
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o", // Using GPT-4o model for improved accuracy and image support
+      model: "gpt-4o-mini", // Switched to GPT-4o-mini for lower cost and improved performance on text tasks
       messages: [
         {
           role: "system",

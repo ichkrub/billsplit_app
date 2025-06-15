@@ -1,143 +1,111 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { PhotoIcon } from '@heroicons/react/24/outline';
 import { ParsedReceipt } from '../types/receipt';
+import { uploadTemporaryReceipt } from '../utils/supabaseClient';
 
 interface Props {
   onOcrComplete?: (data: ParsedReceipt) => void;
   className?: string;
 }
 
-const ReceiptUploader: React.FC<Props> = ({ onOcrComplete, className = '' }) => {
+const ReceiptUploader = ({ onOcrComplete, className = '' }: Props): JSX.Element => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  const convertToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === 'string') {
-          // Keep only the base64 data part after the comma
-          const base64String = reader.result.split(',')[1];
-          // Add padding if needed
-          const paddedString = base64String.replace(/=/g, '').padEnd(base64String.length + (4 - base64String.length % 4) % 4, '=');
-          resolve(paddedString);
-        } else {
-          reject(new Error('Failed to read file as base64'));
-        }
-      };
-      reader.onerror = error => reject(error);
-      reader.readAsDataURL(file);
-    });
-  };
+  // Cleanup function for uploaded resources
+  const cleanupUpload = useCallback(() => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
+  }, [previewUrl]);
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Reset states
     setError(null);
     setIsLoading(true);
+    cleanupUpload();
 
     try {
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         throw new Error('Please upload an image file');
       }
 
-      // Create preview URL
+      // Create preview
       const preview = URL.createObjectURL(file);
       setPreviewUrl(preview);
+      
+      // Upload to Supabase first
+      console.log('Uploading receipt to Supabase...');
+      const imageUrl = await uploadTemporaryReceipt(file);
+      console.log('Receipt uploaded, URL:', imageUrl);
 
-      // Convert to base64
-      const base64Image = await convertToBase64(file);
-
-      // Send to OCR endpoint
-      console.log('Sending image to OCR endpoint...');
+      // Send URL to OCR endpoint
+      console.log('Sending to OCR endpoint:', imageUrl);
       const response = await fetch('/.netlify/functions/ocr-receipt', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ image: base64Image }),
+        body: JSON.stringify({
+          image: imageUrl,
+          type: 'url',
+          config: {
+            expected_currency: 'SGD',
+            vendor_type: 'restaurant',
+            region: 'SG'
+          }
+        })
       });
+
+      // Log raw response for debugging
+      const responseText = await response.text();
+      console.log('Raw OCR response:', responseText);
+
+      // Parse the response text
+      let ocrData;
+      try {
+        ocrData = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('Failed to parse OCR response:', parseError);
+        throw new Error('Invalid response from OCR service');
+      }
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('OCR request failed:', {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorData.error,
-          details: errorData.details,
-        });
-        throw new Error(errorData.details || errorData.error || 'Failed to process receipt');
+        console.error('OCR error response:', ocrData);
+        throw new Error(ocrData.details || ocrData.error || 'Failed to process receipt');
       }
 
-      const data = await response.json();
-      if (data.error) {
-        console.error('OCR data contains error:', data);
-        throw new Error(data.error);
+      if (ocrData.error) {
+        console.error('OCR processing error:', ocrData.error);
+        throw new Error(ocrData.error);
       }
 
-      if (!data.text || typeof data.text !== 'string') {
-        console.error('Invalid OCR response:', data);
-        throw new Error('Invalid OCR response: no text found');
-      }
+      console.log('OCR processing complete:', ocrData);
 
-      console.log('OCR successful, sending text to parser...', data.text);
-      // Parse OCR text using GPT
-      const parseResponse = await fetch('/.netlify/functions/parse-ocr', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ text: data.text }),
-      });
-
-      let responseData;
-      try {
-        if (!parseResponse.ok) {
-          const errorData = await parseResponse.json();
-          console.error('Parse request failed:', {
-            status: parseResponse.status,
-            error: errorData.error,
-            details: errorData.details,
-          });
-          throw new Error(errorData.details || errorData.error || 'Failed to parse receipt');
-        }
-        responseData = await parseResponse.json();
-        
-        // Validate required fields
-        if (!responseData || typeof responseData !== 'object') {
-          throw new Error('Invalid response from parser');
-        }
-      } catch (e) {
-        console.error('Failed to parse GPT response:', e);
-        throw new Error('Invalid response from server');
+      // Handle OCR results
+      if (onOcrComplete) {
+        onOcrComplete(ocrData);
       }
-
-      if (!parseResponse.ok || responseData.error) {
-        console.error('Parser request failed:', {
-          status: parseResponse.status,
-          statusText: parseResponse.statusText,
-          data: responseData,
-        });
-        throw new Error(
-          responseData.error || responseData.details || 'Failed to process receipt'
-        );
-      }
-      
-      // Call the callback with the parsed result
-      onOcrComplete?.(responseData);
-    } catch (err) {
-      console.error('Receipt processing error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to process image');
-      setPreviewUrl(null);
+    } catch (error) {
+      console.error('Error processing receipt:', error);
+      setError(error instanceof Error ? error.message : 'Failed to process receipt');
+      cleanupUpload();
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [onOcrComplete]);
+
+  // Component cleanup
+  React.useEffect(() => {
+    return () => {
+      cleanupUpload();
+    };
+  }, [cleanupUpload]);
 
   return (
     <div className={`space-y-4 ${className}`}>

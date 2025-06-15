@@ -170,6 +170,68 @@ export const getAnonymousSplit = async (id: string): Promise<AnonymousSplit> => 
   return data
 }
 
+/**
+ * Upload a receipt image to temporary storage
+ * @param file The image file to upload
+ * @returns The public URL of the uploaded file
+ */
+export const uploadTemporaryReceipt = async (file: File): Promise<string> => {
+  try {
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2, 15);
+    const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+    const filename = `receipt-${timestamp}-${random}.${fileExt}`;
+
+    // Upload file to Supabase
+    const { error: storageError } = await supabase.storage
+      .from('temp_receipts')
+      .upload(filename, file, {
+        contentType: file.type,
+        upsert: false
+      });
+
+    if (storageError) {
+      console.error('Error uploading receipt:', storageError);
+      throw new Error('Failed to upload receipt to storage');
+    }
+
+    // Get the public URL
+    const { data: urlData } = supabase.storage
+      .from('temp_receipts')
+      .getPublicUrl(filename);
+
+    if (!urlData.publicUrl) {
+      throw new Error('Failed to get public URL for uploaded receipt');
+    }
+
+    console.log('Successfully uploaded to Supabase:', urlData.publicUrl);
+    return urlData.publicUrl;
+
+  } catch (error) {
+    console.error('Error in uploadTemporaryReceipt:', error);
+    throw new Error(`Failed to upload receipt: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+};
+
+// Helper to check if a temporary receipt still exists
+export const checkTemporaryReceipt = async (url: string): Promise<boolean> => {
+  try {
+    const filePath = url.split('/').pop();
+    if (!filePath) return false;
+
+    const { data } = await supabase.storage
+      .from('temp_receipts')
+      .list('', {
+        search: filePath
+      });
+
+    return data ? data.length > 0 : false;
+  } catch (error) {
+    console.error('Error checking receipt:', error);
+    return false;
+  }
+}
+
 // Enhanced health check function
 export const checkSupabaseConnection = async () => {
   try {
