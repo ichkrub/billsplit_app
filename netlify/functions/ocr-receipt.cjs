@@ -52,7 +52,7 @@ const parseResponse = (responseText) => {
   } catch (error) {
     console.error('Error parsing response:', error);
     console.error('Response text was:', responseText);
-    throw new Error(`Failed to parse Make.com response: ${error.message}`);
+    throw new Error('Unable to process the receipt data. Please try again or enter the details manually.');
   }
 };
 
@@ -80,20 +80,21 @@ exports.handler = async (event, context) => {
     if (!body.image) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'No image provided' })
+        body: JSON.stringify({ error: 'No image provided. Please select a receipt image to scan.' })
       };
     }
 
     if (!MAKE_WEBHOOK_URL) {
+      console.error('OCR service webhook URL not configured');
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: 'Make.com webhook URL not configured' })
+        body: JSON.stringify({ error: 'Receipt scanning service is temporarily unavailable. Please try again later.' })
       };
     }
 
-    console.log('Sending request to Make.com...');
+    console.log('Sending request to OCR service...');
     
-    // Send request to make.com
+    // Send request to OCR service
     const response = await fetch(MAKE_WEBHOOK_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -107,19 +108,19 @@ exports.handler = async (event, context) => {
       })
     });
 
-    // Log the make.com response status
-    console.log('Make.com response status:', response.status);
+    // Log the response status
+    console.log('OCR service response status:', response.status);
 
     // Handle non-OK response
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Make.com error response:', errorText);
-      throw new Error(`Make.com API error: ${response.status} ${response.statusText} - ${errorText}`);
+      console.error('OCR service error response:', errorText);
+      throw new Error('Unable to process the receipt. Please ensure the image is clear and try again.');
     }
 
     // Get the response text
     const responseText = await response.text();
-    console.log('Raw Make.com response:', responseText);
+    console.log('Raw OCR service response:', responseText);
 
     // Parse and clean the response
     const result = parseResponse(responseText);
@@ -145,9 +146,9 @@ exports.handler = async (event, context) => {
         'Access-Control-Allow-Origin': '*'
       },
       body: JSON.stringify({
-        error: 'Failed to process receipt',
-        details: error.message,
-        stack: error.stack
+        error: 'Unable to process the receipt. Please try again or enter the details manually.',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
       })
     };
   }

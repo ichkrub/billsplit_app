@@ -4,6 +4,13 @@ import { PhotoIcon } from '@heroicons/react/24/outline';
 import { ParsedReceipt } from '../types/receipt';
 import { uploadTemporaryReceipt } from '../utils/supabaseClient';
 
+enum ProcessingState {
+  IDLE = 'idle',
+  UPLOADING = 'uploading',
+  ANALYZING = 'analyzing',
+  PROCESSING = 'processing',
+}
+
 interface Props {
   onOcrComplete?: (data: ParsedReceipt) => void;
   className?: string;
@@ -11,6 +18,7 @@ interface Props {
 
 const ReceiptUploader = ({ onOcrComplete, className = '' }: Props): JSX.Element => {
   const [isLoading, setIsLoading] = useState(false);
+  const [processingState, setProcessingState] = useState<ProcessingState>(ProcessingState.IDLE);
   const [error, setError] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -28,6 +36,7 @@ const ReceiptUploader = ({ onOcrComplete, className = '' }: Props): JSX.Element 
 
     setError(null);
     setIsLoading(true);
+    setProcessingState(ProcessingState.UPLOADING);
     cleanupUpload();
 
     try {
@@ -45,6 +54,7 @@ const ReceiptUploader = ({ onOcrComplete, className = '' }: Props): JSX.Element 
       console.log('Receipt uploaded, URL:', imageUrl);
 
       // Send URL to OCR endpoint
+      setProcessingState(ProcessingState.ANALYZING);
       console.log('Sending to OCR endpoint:', imageUrl);
       const response = await fetch('/.netlify/functions/ocr-receipt', {
         method: 'POST',
@@ -66,6 +76,12 @@ const ReceiptUploader = ({ onOcrComplete, className = '' }: Props): JSX.Element 
       const responseText = await response.text();
       console.log('Raw OCR response:', responseText);
 
+      // Move to processing state before parsing the response
+      setProcessingState(ProcessingState.PROCESSING);
+      
+      // Add a small delay to make the processing state visible
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       // Parse the response text
       let ocrData;
       try {
@@ -97,8 +113,9 @@ const ReceiptUploader = ({ onOcrComplete, className = '' }: Props): JSX.Element 
       cleanupUpload();
     } finally {
       setIsLoading(false);
+      setProcessingState(ProcessingState.IDLE);
     }
-  }, [onOcrComplete]);
+  }, [onOcrComplete, cleanupUpload]);
 
   // Component cleanup
   React.useEffect(() => {
@@ -157,7 +174,11 @@ const ReceiptUploader = ({ onOcrComplete, className = '' }: Props): JSX.Element 
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
-          <span className="text-sm font-medium">Processing receipt...</span>
+          <span className="text-sm font-medium">
+            {processingState === ProcessingState.UPLOADING && "Uploading receipt..."}
+            {processingState === ProcessingState.ANALYZING && "Analyzing receipt contents..."}
+            {processingState === ProcessingState.PROCESSING && "Processing bill details..."}
+          </span>
         </motion.div>
       )}
 
